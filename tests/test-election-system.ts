@@ -30,7 +30,7 @@ function assert(condition: boolean, testName: string) {
 }
 
 // TEST 1: Token hashing and format
-const sampleToken = 'PLK-DEMO-2026';
+const sampleToken = store.tokens[0].plain_token!;
 const sampleHash = hashToken(sampleToken);
 assert(sampleHash.length === 64, 'Token hash is valid SHA-256 (64 hex characters)');
 
@@ -41,8 +41,8 @@ assert(
 );
 
 // TEST 2: Valid token check
-const validationResult = validateTokenStatus('PLK-DEMO-2026');
-assert(validationResult.valid === true, 'Token PLK-DEMO-2026 is recognized as valid');
+const validationResult = validateTokenStatus(sampleToken);
+assert(validationResult.valid === true, `Token ${sampleToken} is recognized as valid`);
 assert(validationResult.className === 'X TKJ 1', 'Token belongs to class X TKJ 1');
 
 // TEST 3: Invalid token check
@@ -50,18 +50,18 @@ const invalidResult = validateTokenStatus('PLK-FAKE-9999');
 assert(invalidResult.valid === false, 'Invalid token PLK-FAKE-9999 is rejected');
 
 // TEST 4: Candidate Type Validation (Ketua cannot be Wakil, and vice versa)
-const invalidKetuaVote = castVote('PLK-DEMO-2026', 'w-01', 'w-02'); // Using 'w-01' (wakil) as ketua
+const invalidKetuaVote = castVote(sampleToken, 'w-01', 'w-02'); // Using 'w-01' (wakil) as ketua
 assert(invalidKetuaVote.success === false, 'Vote rejected when candidate type mismatch (wakil as ketua)');
 
-const invalidWakilVote = castVote('PLK-DEMO-2026', 'k-01', 'k-02'); // Using 'k-02' (ketua) as wakil
+const invalidWakilVote = castVote(sampleToken, 'k-01', 'k-02'); // Using 'k-02' (ketua) as wakil
 assert(invalidWakilVote.success === false, 'Vote rejected when candidate type mismatch (ketua as wakil)');
 
 // TEST 5: Atomic Vote Submission
-const validVote = castVote('PLK-DEMO-2026', 'k-01', 'w-01');
+const validVote = castVote(sampleToken, 'k-01', 'w-01');
 assert(validVote.success === true, 'Valid vote for Ketua k-01 and Wakil w-01 is successfully accepted');
 
 // TEST 6: Anti-Double Voting (Same token cannot vote twice)
-const doubleVoteAttempt = castVote('PLK-DEMO-2026', 'k-02', 'w-02');
+const doubleVoteAttempt = castVote(sampleToken, 'k-02', 'w-02');
 assert(doubleVoteAttempt.success === false, 'Double voting with already-used token is rejected');
 
 // TEST 7: Ballot Secrecy Verification

@@ -240,16 +240,10 @@ export default function VotePage() {
                   />
                 </div>
 
-                {/* Convenient quick test token pill for evaluation */}
-                <div className="text-left bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
-                  <span>Token Uji Coba: <strong className="font-mono text-blue-600">PLK-DEMO-2026</strong></span>
-                  <button
-                    type="button"
-                    onClick={() => setTokenInput('PLK-DEMO-2026')}
-                    className="px-2 py-1 rounded bg-blue-100 text-blue-700 font-semibold text-[11px] hover:bg-blue-200 transition-colors"
-                  >
-                    Pakai Token Uji
-                  </button>
+                {/* Petunjuk Panitia */}
+                <div className="text-left bg-blue-50/60 p-3.5 rounded-xl border border-blue-100 text-xs text-slate-600 flex items-start gap-2.5">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span>Masukkan kode token resmi yang tertera pada lembar fisik kartu suara yang dibagikan oleh Panitia Pemilihan OSIS.</span>
                 </div>
 
                 <button

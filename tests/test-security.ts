@@ -73,10 +73,10 @@ const cleanText = sanitizeString(xssPayload);
 assert(!cleanText.includes('<script>') && !cleanText.includes('<b>'), 'Sanitizer strips HTML & script tags');
 
 // 6. Token format validation
-assert(isValidTokenFormat('PLK-DEMO-2026') === true, 'Valid token PLK-DEMO-2026 passes validation');
+assert(isValidTokenFormat('PLK-7X9B-4MN2') === true, 'Valid token PLK-7X9B-4MN2 passes validation');
 assert(isValidTokenFormat('PLK-ABCD-1234') === true, 'Valid token pattern passes validation');
 assert(isValidTokenFormat('abc') === false, 'Too short token is rejected');
 assert(isValidTokenFormat('<script>alert(1)</script>') === false, 'Malicious token string is rejected');
-assert(isValidTokenFormat('PLK DEMO 2026') === false, 'Token with spaces is rejected');
+assert(isValidTokenFormat('PLK 7X9B 4MN2') === false, 'Token with spaces is rejected');
 
 console.log(`\nResults: ${passedTests}/${totalTests} security tests passed.\n`);

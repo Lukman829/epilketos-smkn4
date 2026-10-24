@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'feat: purge all simulation and mock demo features from public results';
+  const commitMsg = 'feat: complete removal of demo/simulation token pills and mock traces';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,

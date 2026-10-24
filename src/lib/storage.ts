@@ -67,15 +67,15 @@ if (process.env.NODE_ENV !== 'production') {
   globalForStore.__electionStore = store;
 }
 
-// Seed initial demo tokens for immediate testing if empty
+// Seed initial token allocation if store is uninitialized
 export function initStoreIfNeeded() {
   if (store.initialized) return;
 
-  // Create initial demo batches for classes
+  // Create initial allocation batches for classes
   const initialBatches: TokenBatch[] = [];
   const initialTokens: VotingToken[] = [];
 
-  // Generate 5 test tokens for each of the first 4 classes for instant testing
+  // Generate initial tokens for classes
   store.classes.slice(0, 4).forEach((cls) => {
     const batchId = `batch-${cls.id}`;
     initialBatches.push({
@@ -89,9 +89,7 @@ export function initStoreIfNeeded() {
     });
 
     for (let i = 0; i < 5; i++) {
-      const plainToken = i === 0 && cls.id === 'cls-10-tkj-1' 
-        ? 'PLK-DEMO-2026' 
-        : generateSecureToken();
+      const plainToken = generateSecureToken();
       const hash = hashToken(plainToken);
       const preview = `${plainToken.slice(0, 7)}***${plainToken.slice(-2)}`;
 
