@@ -629,6 +629,26 @@ export function adminSaveClass(classItem: ClassRecord, actor: string): ClassReco
   return classItem;
 }
 
+export function recordAuditLog(
+  action: string,
+  actor: string,
+  details: Record<string, unknown>
+): AuditLog {
+  initStoreIfNeeded();
+  const log: AuditLog = {
+    id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    action,
+    actor,
+    details,
+    created_at: new Date().toISOString(),
+  };
+  store.auditLogs.unshift(log);
+  if (store.auditLogs.length > 500) {
+    store.auditLogs = store.auditLogs.slice(0, 500);
+  }
+  return log;
+}
+
 export function getAuditLogs(): AuditLog[] {
   return [...store.auditLogs];
 }

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getElectionResults } from '@/lib/storage';
+import { getAdminFromRequest } from '@/lib/security';
 
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
     const isDemoMode = searchParams.get('demo') === 'true';
-    const authHeader = req.headers.get('authorization');
-    const isAdmin = authHeader === 'Bearer epilketos-admin-authorized-token';
+    const admin = getAdminFromRequest(req);
+    const isAdmin = admin !== null;
 
     const results = getElectionResults(isAdmin);
 

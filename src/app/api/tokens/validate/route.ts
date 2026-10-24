@@ -1,34 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateTokenStatus } from '@/lib/storage';
-
-// In-memory rate limiting map (IP -> attempts, reset every minute)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const record = rateLimitMap.get(ip);
-
-  if (!record || now > record.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + 60000 });
-    return true;
-  }
-
-  if (record.count >= 20) {
-    return false; // Exceeded 20 attempts/minute
-  }
-
-  record.count += 1;
-  return true;
-}
+import { getClientIp, rateLimit, isValidTokenFormat } from '@/lib/security';
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get('x-forwarded-for') || 'local';
-    if (!checkRateLimit(ip)) {
+    const clientIp = getClientIp(req);
+
+    // Rate limit: max 20 token validations per minute per IP
+    const rl = rateLimit(`token-validate:${clientIp}`, 20, 60 * 1000);
+    if (!rl.allowed) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Terlalu banyak percobaan validasi. Silakan tunggu 1 menit.',
+          error: `Terlalu banyak percobaan validasi token. Silakan tunggu ${rl.retryAfterSeconds} detik.`,
         },
         { status: 429 }
       );
@@ -44,7 +28,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = validateTokenStatus(token);
+    const cleanToken = token.trim();
+
+    // Enforce strict token format (8-30 chars, alphanumeric & hyphens only)
+    if (!isValidTokenFormat(cleanToken)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Format token tidak valid. Pastikan token terdiri dari huruf, angka, dan tanda hubung tanpa spasi.',
+        },
+        { status: 400 }
+      );
+    }
+
+    const result = validateTokenStatus(cleanToken);
 
     if (!result.valid) {
       return NextResponse.json(

@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'feat: Production Release E-PILKETOS SMKN 4 Kota Serang (3D Interactive, Apple Light Theme, Atomic Voting, Secrecy Guaranteed)';
+  const commitMsg = 'fix(security): comprehensive security audit remediation (HMAC session tokens, rate limiting, constant-time compare, security headers, input sanitization)';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,

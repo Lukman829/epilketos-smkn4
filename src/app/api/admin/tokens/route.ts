@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAdminFromRequest, sanitizeString } from '@/lib/security';
 import {
   getAllTokens,
   adminGenerateBatchTokens,
@@ -7,9 +8,12 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = req.headers.get('authorization');
-    if (auth !== 'Bearer epilketos-admin-authorized-token') {
-      return NextResponse.json({ success: false, error: 'Akses ditolak.' }, { status: 401 });
+    const admin = getAdminFromRequest(req);
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: 'Akses ditolak. Sesi tidak sah atau telah berakhir.' },
+        { status: 401 }
+      );
     }
 
     const { searchParams } = new URL(req.url);
@@ -51,24 +55,26 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = req.headers.get('authorization');
-    if (auth !== 'Bearer epilketos-admin-authorized-token') {
-      return NextResponse.json({ success: false, error: 'Akses ditolak.' }, { status: 401 });
+    const admin = getAdminFromRequest(req);
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: 'Akses ditolak. Sesi tidak sah atau telah berakhir.' },
+        { status: 401 }
+      );
     }
 
     const body = await req.json();
-    const actor = req.headers.get('x-admin-name') || 'Admin Panitia';
-
     const { class_id, count } = body;
 
-    if (!class_id || !count || count <= 0) {
+    const tokenCount = parseInt(String(count), 10);
+    if (!class_id || isNaN(tokenCount) || tokenCount <= 0 || tokenCount > 100) {
       return NextResponse.json(
-        { success: false, error: 'Kelas dan jumlah token (minimal 1) wajib ditentukan.' },
+        { success: false, error: 'Kelas dan jumlah token (antara 1 hingga 100) wajib ditentukan.' },
         { status: 400 }
       );
     }
 
-    const result = adminGenerateBatchTokens(class_id, Number(count), actor);
+    const result = adminGenerateBatchTokens(class_id, tokenCount, admin.name);
 
     return NextResponse.json({
       success: true,
@@ -85,14 +91,15 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const auth = req.headers.get('authorization');
-    if (auth !== 'Bearer epilketos-admin-authorized-token') {
-      return NextResponse.json({ success: false, error: 'Akses ditolak.' }, { status: 401 });
+    const admin = getAdminFromRequest(req);
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: 'Akses ditolak. Sesi tidak sah atau telah berakhir.' },
+        { status: 401 }
+      );
     }
 
     const body = await req.json();
-    const actor = req.headers.get('x-admin-name') || 'Admin Panitia';
-
     const { token_id, reason, generate_replacement } = body;
 
     if (!token_id || !reason) {
@@ -102,7 +109,8 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const result = adminRevokeToken(token_id, reason, Boolean(generate_replacement), actor);
+    const sanitizedReason = sanitizeString(String(reason), 200);
+    const result = adminRevokeToken(token_id, sanitizedReason, Boolean(generate_replacement), admin.name);
 
     if (!result.success) {
       return NextResponse.json({ success: false, error: result.error }, { status: 400 });

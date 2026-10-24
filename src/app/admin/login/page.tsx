@@ -42,17 +42,6 @@ export default function AdminLoginPage() {
     }
   };
 
-  const handleQuickFill = (role: 'ketua' | 'utama') => {
-    if (role === 'ketua') {
-      setUsername('ketua.panitia');
-      setPassword('SerangUnggul2026!');
-    } else {
-      setUsername('admin.utama');
-      setPassword('PilketoSMKN4_Secure!');
-    }
-    setErrorMessage(null);
-  };
-
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col justify-center items-center px-4 py-12">
       <div className="w-full max-w-md space-y-8">
@@ -140,29 +129,6 @@ export default function AdminLoginPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Helper for Instant Testing */}
-          <div className="pt-4 border-t border-slate-100 space-y-2">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block text-center font-bold">
-              Autofill Cepat Akun Uji:
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickFill('ketua')}
-                className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700 text-center transition-colors truncate"
-              >
-                Ketua Panitia
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('utama')}
-                className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700 text-center transition-colors truncate"
-              >
-                Admin Utama
-              </button>
-            </div>
-          </div>
         </div>
 
         <p className="text-[11px] text-center text-slate-500">

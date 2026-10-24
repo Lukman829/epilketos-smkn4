@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "npx tsx tests/test-election-system.ts"
+    "test": "npx tsx tests/test-election-system.ts && npx tsx tests/test-security.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
