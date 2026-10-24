@@ -330,41 +330,6 @@ export default function ResultsPage() {
                 </div>
               </div>
 
-              {/* Class Participation Breakdown */}
-              <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
-                <div>
-                  <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                    Partisipasi Agregat Per Kelas
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Data tingkat kehadiran per rombongan belajar tanpa membuka identitas pemilih.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  {data.class_participation.map((c) => (
-                    <div
-                      key={c.class_id}
-                      className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5"
-                    >
-                      <span className="font-mono font-bold text-xs text-slate-900 block truncate">
-                        {c.class_name}
-                      </span>
-                      <div className="flex justify-between items-center text-[11px] font-mono">
-                        <span className="text-slate-500">{c.voted}/{c.quota}</span>
-                        <span className="font-bold text-blue-600">{c.percentage}%</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden">
-                        <div
-                          className="h-full bg-blue-500 rounded-full"
-                          style={{ width: `${c.percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               {/* Print Sheet Action */}
               <div className="flex justify-center pt-4">
                 <button

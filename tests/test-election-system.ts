@@ -128,6 +128,15 @@ assert(
   publicResultsAfter.is_published === true && publicResultsAfter.ketua_results.length > 0,
   'Results are published and visible to public after official authorization'
 );
+assert(
+  publicResultsAfter.class_participation.length === 0,
+  'Official public results do NOT expose class participation data'
+);
+const adminResults = getElectionResults(true);
+assert(
+  adminResults.class_participation.length > 0,
+  'Admin results retain class participation for internal committee monitoring'
+);
 
 console.log('\n====================================================');
 console.log(`TEST SUMMARY: ${passedTests}/${totalTests} TESTS PASSED`);

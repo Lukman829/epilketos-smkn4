@@ -378,7 +378,7 @@ export function getElectionResults(isAdmin = false): ElectionResultsData {
     turnout_percentage: turnoutPercentage,
     ketua_results: ketuaResults,
     wakil_results: wakilResults,
-    class_participation: classParticipation,
+    class_participation: isAdmin ? classParticipation : [],
     is_published: isPublished,
     published_at: store.settings.results_published_at,
   };

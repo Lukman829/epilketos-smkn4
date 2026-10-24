@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'feat: update school structure to 8 official majors (TKJ, TSM, TKRO, TBSM, MPLB, AK, TEI, TITL) and 30 rombel classes';
+  const commitMsg = 'fix: remove class participation breakdown from official public results';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,
