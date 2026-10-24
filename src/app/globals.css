@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pearl: #F8FAFC;
+  --color-pure-white: #FFFFFF;
+  --color-silver: #CBD5E1;
+  --color-cool-gray: #64748B;
+  --color-graphite: #111827;
+  --color-graphite-dark: #0B0F17;
+  --color-electric: #3B82F6;
+  --color-electric-hover: #2563EB;
+  --color-soft-cyan: #67E8F9;
+}
+
+:root {
+  --background: #F8FAFC;
+  --foreground: #111827;
+  --primary-electric: #3B82F6;
+  --primary-cyan: #67E8F9;
+}
+
+/* Custom smooth transitions & typography */
+html {
+  scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+body {
+  background-color: #F8FAFC;
+  color: #111827;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glass & depth styles */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(203, 213, 225, 0.5);
+}
+
+.glass-panel-dark {
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gradient-text-electric {
+  background: linear-gradient(135deg, #111827 0%, #3B82F6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-glow {
+  background: linear-gradient(135deg, #FFFFFF 0%, #67E8F9 60%, #3B82F6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtle-border {
+  border: 1px solid #E2E8F0;
+}
+
+.card-hover-depth {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-hover-depth:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+/* Print styles for voting token cards */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .token-card-print {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
