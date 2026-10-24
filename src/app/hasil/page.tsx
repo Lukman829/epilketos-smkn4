@@ -152,7 +152,7 @@ export default function ResultsPage() {
                     {data.total_tokens_used}
                   </p>
                   <p className="text-xs text-slate-400">
-                    Konsisten 100% dengan surat suara
+                    Sesuai dengan rekapitulasi surat suara masuk
                   </p>
                 </div>
 

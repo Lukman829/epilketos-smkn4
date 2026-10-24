@@ -128,7 +128,7 @@ export default function CandidateDetailModal({ candidate, onClose }: CandidateDe
         {/* Modal Footer CTA */}
         <div className="p-6 border-t border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-500 text-center sm:text-left">
-            Pilihan Anda dilindungi asas kerahasiaan pemilihan umum OSIS SMKN 4 Kota Serang.
+            Satu token berlaku untuk satu kali pemberian suara pada bilik suara digital.
           </p>
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button

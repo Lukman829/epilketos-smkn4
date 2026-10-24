@@ -26,7 +26,7 @@ export default function Footer() {
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed max-w-md">
-              Platform pemilihan umum digital resmi Organisasi Siswa Intra Sekolah (OSIS) SMKN 4 Kota Serang. Menjunjung tinggi integritas demokrasi sekolah dengan standar kerahasiaan suara mutlak dan transparansi rekapitulasi data.
+              Platform pemilihan umum digital resmi Organisasi Siswa Intra Sekolah (OSIS) SMKN 4 Kota Serang. Menjunjung tinggi asas pemilihan umum yang langsung, umum, bebas, rahasia, jujur, dan adil serta transparansi rekapitulasi data.
             </p>
 
             <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -71,8 +71,8 @@ export default function Footer() {
             </h5>
             <ul className="space-y-2 text-xs">
               <li className="flex items-center gap-1.5 text-slate-600">
-                <Shield className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Kerahasiaan Suara Terjamin</span>
+                <Shield className="w-3.5 h-3.5 text-blue-600" />
+                <span>Pemisahan Data Pemilih &amp; Suara</span>
               </li>
               <li className="flex items-center gap-1.5 text-slate-600">
                 <Sparkles className="w-3.5 h-3.5 text-blue-600" />

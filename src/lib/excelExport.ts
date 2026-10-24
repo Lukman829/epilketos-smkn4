@@ -64,7 +64,7 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
     ['Langkah 2:', 'Periksa kode token pemilihan resmi pada baris nomor absen Anda di bawah.'],
     ['Langkah 3:', 'Tentukan pilihan 1 (satu) Calon Ketua dan 1 (satu) Calon Wakil Ketua OSIS berdasarkan pertimbangan pribadi.'],
     ['Langkah 4:', 'Tinjau kembali ringkasan pilihan dan tekan tombol konfirmasi hingga pemberitahuan berhasil ditampilkan.'],
-    ['KETENTUAN KERAHASIAAN:', 'Setiap kode token bersifat rahasia dan hanya berlaku untuk 1 (satu) kali penggunaan.'],
+    ['KETENTUAN PENGGUNAAN:', 'Setiap kode token hanya berlaku untuk 1 (satu) kali penggunaan dan langsung kedaluwarsa setelah suara terkirim.'],
     [],
     // 4. Baris Header Tabel
     [

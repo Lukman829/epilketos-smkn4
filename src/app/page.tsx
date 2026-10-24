@@ -146,9 +146,9 @@ export default function HomePage() {
                     </p>
                   </div>
                   <div className="space-y-0.5">
-                    <span className="font-mono text-xl sm:text-2xl font-black text-blue-600">100%</span>
+                    <span className="font-mono text-xl sm:text-2xl font-black text-blue-600">1x</span>
                     <p className="text-[11px] text-slate-500 font-medium leading-tight">
-                      Kerahasiaan Suara Anonim
+                      Token Sekali Pakai
                     </p>
                   </div>
                 </div>
@@ -338,7 +338,7 @@ export default function HomePage() {
                   Konfirmasi & Rekam Suara
                 </h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Konfirmasi pilihan Anda. Server menyimpan suara Anda secara atomik dan anonim. Bukti keberhasilan resmi langsung ditampilkan di layar.
+                  Konfirmasi pilihan Anda. Server memproses surat suara dan mengunci status token. Bukti keberhasilan resmi langsung ditampilkan di layar.
                 </p>
               </div>
             </div>
@@ -362,13 +362,13 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="rounded-3xl border border-slate-200 bg-[#F8FAFC] p-8 sm:p-14 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
               <div className="lg:col-span-6 space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-mono font-bold">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>JAMINAN INTEGRITAS SISTEM</span>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-300 text-xs font-mono font-bold">
+                  <ShieldCheck className="w-4 h-4 text-blue-600" />
+                  <span>ARSITEKTUR TEKNIS SISTEM</span>
                 </div>
 
                 <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                  Kerahasiaan Hak Suara Pemilih Terjamin.
+                  Pemisahan Data Pemilih dan Pilihan Suara.
                 </h2>
 
                 <p className="text-slate-600 text-sm leading-relaxed">
@@ -382,7 +382,7 @@ export default function HomePage() {
                   </div>
                   <div className="flex items-center gap-3 text-xs sm:text-sm text-slate-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                    <span>Tabel surat suara tersimpan secara anonim tanpa foreign key pemilih.</span>
+                    <span>Tabel surat suara tersimpan tanpa relasi (foreign key) ke identitas pemilih.</span>
                   </div>
                   <div className="flex items-center gap-3 text-xs sm:text-sm text-slate-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />

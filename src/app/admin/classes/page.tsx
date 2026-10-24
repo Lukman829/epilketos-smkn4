@@ -208,7 +208,7 @@ export default function AdminClassesPage() {
           <p className="text-[11px] text-slate-500">
             {totalTokens === totalQuota ? (
               <span className="text-emerald-600 flex items-center gap-1 font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Sesuai 100% dengan kuota
+                <CheckCircle2 className="w-3.5 h-3.5" /> Sesuai dengan kuota DPT
               </span>
             ) : (
               <span className="text-amber-600">Selisih {Math.abs(totalQuota - totalTokens)} token</span>

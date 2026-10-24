@@ -584,7 +584,7 @@ export default function VotePage() {
               <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs space-y-1">
                 <p className="font-bold">Ketentuan Integritas Suara:</p>
                 <p>
-                  Setelah tombol &ldquo;Kirim Suara Sah&rdquo; diklik, server akan mengunci token Anda dan memasukkan surat suara ke kotak suara digital secara anonim. Suara yang telah masuk tidak dapat dibatalkan atau diubah.
+                  Setelah tombol &ldquo;Kirim Suara Sah&rdquo; diklik, server akan mengunci token Anda dan memasukkan surat suara ke kotak suara digital. Suara yang telah masuk tidak dapat dibatalkan atau diubah.
                 </p>
               </div>
 
@@ -605,7 +605,7 @@ export default function VotePage() {
                   className="w-full sm:flex-grow py-4 px-8 rounded-xl bg-slate-900 hover:bg-blue-600 disabled:bg-slate-400 text-white font-extrabold text-sm transition-all shadow-lg flex items-center justify-center gap-2"
                 >
                   {isSubmittingVote ? (
-                    <span>Sedang Menyimpan Suara Secara Anonim...</span>
+                    <span>Sedang Memproses Suara...</span>
                   ) : (
                     <>
                       <Vote className="w-4 h-4 text-blue-400" />
@@ -636,7 +636,7 @@ export default function VotePage() {
                   HAK SUARA ANDA TELAH TERCATAT
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                  Terima kasih atas partisipasi Anda dalam Pemilihan Ketua dan Wakil Ketua OSIS SMKN 4 Kota Serang. Pilihan Anda telah tersimpan secara anonim sesuai asas kerahasiaan pemilihan.
+                  Terima kasih atas partisipasi Anda dalam Pemilihan Ketua dan Wakil Ketua OSIS SMKN 4 Kota Serang. Pilihan suara Anda telah tersimpan di kotak suara digital dan token pemilih telah ditandai digunakan.
                 </p>
               </div>
 
@@ -651,8 +651,8 @@ export default function VotePage() {
                   <span>{successTimestamp ? new Date(successTimestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Tercatat'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Kerahasiaan Pemilih:</span>
-                  <span className="font-bold text-blue-600">100% Anonim</span>
+                  <span>Status Token:</span>
+                  <span className="font-bold text-slate-700">Telah Digunakan (Used)</span>
                 </div>
               </div>
 

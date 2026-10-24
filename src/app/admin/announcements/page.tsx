@@ -750,7 +750,7 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
                   </ol>
 
                   <p className="italic text-[11px] text-slate-500">
-                    *Catatan: Kode token bersifat rahasia dan langsung kedaluwarsa setelah suara sah tercatat. Surat suara disimpan secara anonim tanpa identitas pemilih demi menjamin kerahasiaan penuh asas LUBERJURDIL.
+                    *Catatan: Kode token berlaku 1 (satu) kali pakai dan langsung kedaluwarsa setelah suara sah tercatat. Surat suara disimpan di database tanpa relasi ke identitas pribadi pemilih sesuai ketentuan asas LUBERJURDIL.
                   </p>
                 </div>
 

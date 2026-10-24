@@ -122,7 +122,7 @@ export default function PrintTokensPage() {
             {/* Token Code Display */}
             <div className="text-center py-2 bg-white rounded-lg border border-slate-200 shadow-inner">
               <span className="text-[9px] font-mono uppercase text-slate-400 block font-bold">
-                KODE TOKEN PEMILIH RAHASIA:
+                KODE TOKEN PEMILIHAN RESMI:
               </span>
               <span className="font-mono font-black text-lg sm:text-xl text-slate-900 tracking-wider">
                 {t.plain}
