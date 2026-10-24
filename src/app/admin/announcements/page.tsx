@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { ClassRecord } from '@/types/election';
 import { exportClassTokensToExcel, TokenExportItem } from '@/lib/excelExport';
+import { exportClassTokensToDocx } from '@/lib/docxExport';
 import SchoolLogo from '@/components/common/SchoolLogo';
 
 export default function AdminAnnouncementsPage() {
@@ -28,6 +29,7 @@ export default function AdminAnnouncementsPage() {
   const [tokens, setTokens] = useState<TokenExportItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isExportingDocx, setIsExportingDocx] = useState(false);
 
   // Form states (Require Nama Kelas & Jumlah Siswa)
   const [voterCount, setVoterCount] = useState<number>(36);
@@ -41,8 +43,8 @@ export default function AdminAnnouncementsPage() {
     '1. Setiap token hanya dapat digunakan untuk 1 (satu) kali pemberian suara sah.\n2. Token bersifat pribadi dan rahasia, dilarang membagikan kode token kepada orang lain.\n3. Pemilihan dapat diakses melalui smartphone atau komputer yang terhubung ke internet.'
   );
 
-  // Tab state: 'excel' | 'letter' | 'broadcast'
-  const [activeTab, setActiveTab] = useState<'excel' | 'letter' | 'broadcast'>('excel');
+  // Tab state: 'letter' | 'excel' | 'broadcast' (Default: 'letter' for pristine formatted document)
+  const [activeTab, setActiveTab] = useState<'letter' | 'excel' | 'broadcast'>('letter');
   const [copiedBroadcast, setCopiedBroadcast] = useState(false);
   const [copiedTokenId, setCopiedTokenId] = useState<string | null>(null);
   const [tokenSearch, setTokenSearch] = useState('');
@@ -150,7 +152,7 @@ export default function AdminAnnouncementsPage() {
       if (data.success) {
         setNotification({
           type: 'success',
-          text: `Berhasil menerbitkan ${data.count} token pemilihan untuk ${currentClass?.name}. Berkas pengumuman dan ekspor Excel telah aktif.`,
+          text: `Berhasil menerbitkan ${data.count} token pemilihan untuk ${currentClass?.name}. Dokumen resmi Word (.docx) dan Excel distribusi telah aktif.`,
         });
 
         // Refetch tokens
@@ -160,7 +162,7 @@ export default function AdminAnnouncementsPage() {
         const tokData = await tokRes.json();
         if (tokData.success) {
           setTokens(tokData.tokens);
-          setActiveTab('excel');
+          setActiveTab('letter');
         }
       } else {
         setNotification({
@@ -226,6 +228,29 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
   const handleShareWhatsApp = () => {
     const encoded = encodeURIComponent(broadcastText);
     window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+  };
+
+  // Export DOCX (Microsoft Word — Official, Pristine & Highly Recommended)
+  const handleExportDocx = async () => {
+    if (!currentClass) return;
+    try {
+      setIsExportingDocx(true);
+      await exportClassTokensToDocx({
+        className: currentClass.name,
+        tokens,
+        voterQuota: voterCount,
+        homeroomTeacher,
+        electionDate,
+        electionTime,
+        electionVenue,
+        voteUrl,
+      });
+    } catch (err) {
+      console.error('Failed to export DOCX:', err);
+      alert('Terjadi kendala saat membuat dokumen Word (.docx). Silakan gunakan ekspor Excel sebagai alternatif.');
+    } finally {
+      setIsExportingDocx(false);
+    }
   };
 
   // Export Excel
@@ -461,21 +486,9 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
         ) : (
           /* Active State: Ready for Export & Document Previews */
           <div className="space-y-4">
-            {/* Top Action Bar with Prominent Excel Export */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl bg-white border border-slate-200 shadow-sm">
-              <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-100 border border-slate-200 w-fit">
-                <button
-                  onClick={() => setActiveTab('excel')}
-                  className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all ${
-                    activeTab === 'excel'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                  <span>Berkas Excel Distribusi ({tokens.length})</span>
-                </button>
-
+            {/* Top Action Bar with Prominent DOCX & Excel Exports */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-3xl bg-white border border-slate-200 shadow-sm">
+              <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-slate-100 border border-slate-200 w-fit">
                 <button
                   onClick={() => setActiveTab('letter')}
                   className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all ${
@@ -485,7 +498,20 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
                   }`}
                 >
                   <FileText className="w-4 h-4 text-blue-600" />
-                  <span>Surat Resmi (A4)</span>
+                  <span>Dokumen Resmi (.docx / A4)</span>
+                  <span className="px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 text-[10px] font-bold">Rapi</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('excel')}
+                  className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all ${
+                    activeTab === 'excel'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                  <span>Spreadsheet (.xlsx)</span>
                 </button>
 
                 <button
@@ -497,25 +523,43 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
                   }`}
                 >
                   <Send className="w-4 h-4 text-emerald-600" />
-                  <span>Teks Pemberitahuan</span>
+                  <span>Pesan Singkat (WA)</span>
                 </button>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Primary Button: DOCX (Sangat Rapi, Rekomendasi Utama) */}
                 <button
-                  onClick={handleExportExcel}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-emerald-600/20"
+                  onClick={handleExportDocx}
+                  disabled={isExportingDocx}
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-blue-600/20"
+                  title="Unduh format dokumen resmi Microsoft Word (kop surat, panduan rapi, dan tabel token siap cetak/distribusi)"
                 >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  <span>Unduh Dokumen Excel {currentClass?.name} (.xlsx)</span>
+                  <FileText className="w-4 h-4" />
+                  <span>{isExportingDocx ? 'Menyiapkan Word...' : `Unduh Dokumen Word (.docx)`}</span>
+                  <span className="px-1.5 py-0.5 rounded bg-blue-500 text-[10px] font-semibold text-white uppercase">
+                    Terbaik
+                  </span>
                 </button>
 
+                {/* Secondary Button: XLSX */}
+                <button
+                  onClick={handleExportExcel}
+                  className="px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center gap-2 transition-all shadow-xs"
+                  title="Unduh format spreadsheet Microsoft Excel"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                  <span>Unduh Excel (.xlsx)</span>
+                </button>
+
+                {/* Tertiary Button: Print / PDF */}
                 <button
                   onClick={handlePrintLetter}
-                  className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 transition-colors shadow-sm"
+                  className="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 transition-colors shadow-xs"
+                  title="Cetak langsung atau simpan sebagai PDF"
                 >
                   <Printer className="w-4 h-4" />
-                  <span>Cetak Dokumen Resmi</span>
+                  <span>Cetak / PDF</span>
                 </button>
               </div>
             </div>
@@ -674,30 +718,58 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
 
             {/* TAB CONTENT: OFFICIAL LETTER A4 */}
             {activeTab === 'letter' && (
-              <div className="p-8 sm:p-12 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6 text-slate-900">
-                {/* Kop Surat SMKN 4 Kota Serang */}
-                <div className="pb-4 border-b-4 border-double border-slate-900 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                  <div className="flex-shrink-0">
-                    <SchoolLogo className="w-20 h-20 object-contain drop-shadow-sm" size={80} />
+              <div className="space-y-4">
+                {/* Format Word Banner */}
+                <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 text-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <FileText className="w-4 h-4 text-blue-700 flex-shrink-0" />
+                    <span>
+                      <strong>Format Dokumen Word (.docx):</strong> Dokumen resmi A4 yang tertata rapi, lengkap dengan kop surat kedinasan, panduan voting, tabel token siswa, dan tanda tangan pengesahan panitia.
+                    </span>
                   </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-xs font-black uppercase tracking-wider text-slate-600">
-                      PEMERINTAH DAERAH PROVINSI BANTEN
-                    </p>
-                    <p className="text-sm font-black uppercase tracking-wider text-slate-700">
-                      DINAS PENDIDIKAN DAN KEBUDAYAAN
-                    </p>
-                    <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900">
-                      SMK NEGERI 4 KOTA SERANG
-                    </h2>
-                    <p className="text-[11px] font-medium text-slate-500">
-                      Jl. Raya Taktakan KM 03, Panggungjati, Kec. Taktakan, Kota Serang, Banten 42162
-                    </p>
-                    <p className="text-[11px] font-bold text-blue-700">
-                      KOMISI PEMILIHAN KETUA &amp; WAKIL KETUA OSIS — MASA BAKTI 2026/2027
-                    </p>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={handleExportDocx}
+                      disabled={isExportingDocx}
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>{isExportingDocx ? 'Mengunduh...' : 'Unduh .docx'}</span>
+                    </button>
+                    <button
+                      onClick={handlePrintLetter}
+                      className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Cetak / PDF</span>
+                    </button>
                   </div>
                 </div>
+
+                <div className="p-8 sm:p-12 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6 text-slate-900">
+                  {/* Kop Surat SMKN 4 Kota Serang */}
+                  <div className="pb-4 border-b-4 border-double border-slate-900 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                    <div className="flex-shrink-0">
+                      <SchoolLogo className="w-20 h-20 object-contain drop-shadow-sm" size={80} />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-xs font-black uppercase tracking-wider text-slate-600">
+                        PEMERINTAH DAERAH PROVINSI BANTEN
+                      </p>
+                      <p className="text-sm font-black uppercase tracking-wider text-slate-700">
+                        DINAS PENDIDIKAN DAN KEBUDAYAAN
+                      </p>
+                      <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900">
+                        SMK NEGERI 4 KOTA SERANG
+                      </h2>
+                      <p className="text-[11px] font-medium text-slate-500">
+                        Jl. Raya Taktakan KM 03, Panggungjati, Kec. Taktakan, Kota Serang, Banten 42162
+                      </p>
+                      <p className="text-[11px] font-bold text-blue-700">
+                        KOMISI PEMILIHAN KETUA &amp; WAKIL KETUA OSIS — MASA BAKTI 2026/2027
+                      </p>
+                    </div>
+                  </div>
 
                 {/* Letter Meta */}
                 <div className="flex flex-col sm:flex-row justify-between text-xs text-slate-700 gap-2">
@@ -766,6 +838,7 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
                   </div>
                 </div>
               </div>
+            </div>
             )}
 
             {/* TAB CONTENT: BROADCAST TEXT */}

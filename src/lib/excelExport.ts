@@ -33,7 +33,6 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
     homeroomTeacher = '...........................................',
     electionDate = 'Senin, 26 Oktober 2026',
     electionTime = '08:00 - 14:00 WIB',
-    electionVenue = 'Bilik Suara Digital (Lab Komputer / Smartphone Masing-Masing)',
     voteUrl = typeof window !== 'undefined' ? `${window.location.origin}/vote` : 'https://epilketos-smkn4.vercel.app/vote',
     schoolName = 'SMK NEGERI 4 KOTA SERANG',
     academicYear = 'Masa Bakti 2026/2027',
@@ -46,27 +45,39 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
 
   const teacherNameDisplay = homeroomTeacher.trim() ? homeroomTeacher.trim() : '...........................................';
 
+  // Format array of arrays
   const aoaData: (string | number)[][] = [
-    // 1. Header Judul Resmi
-    [`PEMILIHAN KETUA DAN WAKIL KETUA OSIS — ${schoolName}`],
-    [`DAFTAR DISTRIBUSI TOKEN PEMILIHAN OSIS (${academicYear})`],
+    // R1: Judul Utama (Merged A1:D1)
+    [`PEMILIHAN KETUA & WAKIL KETUA OSIS — ${schoolName}`],
+    // R2: Subjudul Dokumen (Merged A2:D2)
+    [`DAFTAR DISTRIBUSI TOKEN PEMILIHAN DIGITAL (${academicYear.toUpperCase()})`],
+    // R3: Baris kosong
     [],
-    // 2. Blok Identitas Kelas & Pelaksanaan
-    ['INFORMASI KELAS DAN JADWAL PELAKSANAAN:'],
-    ['Nama Kelas:', className, '', 'Wali Kelas / Pendamping:', teacherNameDisplay],
-    ['Jumlah DPT:', `${tokens.length} Siswa (Kuota: ${voterQuota})`, '', 'Hari, Tanggal Pemilihan:', electionDate],
-    ['Tautan Bilik Suara:', voteUrl, '', 'Waktu Pelaksanaan:', electionTime],
-    ['Lokasi / Akses:', electionVenue, '', 'Status Dokumen:', 'RESMI DAN RAHASIA'],
+    // R4: Banner Informasi Kelas (Merged A4:D4)
+    ['INFORMASI KELAS & JADWAL PELAKSANAAN'],
+    // R5: Meta 1
+    ['Nama Kelas:', className, 'Wali Kelas / Pendamping:', teacherNameDisplay],
+    // R6: Meta 2
+    ['Alokasi DPT:', `${tokens.length} Siswa (Kuota: ${voterQuota})`, 'Hari, Tanggal Pemilihan:', electionDate],
+    // R7: Meta 3
+    ['Waktu Pelaksanaan:', electionTime, 'Tautan Bilik Suara:', voteUrl],
+    // R8: Baris kosong
     [],
-    // 3. Blok Panduan & Tata Cara Memilih (Dibaca Wali Kelas & Siswa sebelum tabel)
-    ['PANDUAN DAN TATA CARA PEMILIHAN (HAK SUARA SISWA):'],
-    ['Langkah 1:', `Akses portal bilik suara digital melalui peramban pada tautan: ${voteUrl}`],
-    ['Langkah 2:', 'Periksa kode token pemilihan resmi pada baris nomor absen Anda di bawah.'],
-    ['Langkah 3:', 'Tentukan pilihan 1 (satu) Calon Ketua dan 1 (satu) Calon Wakil Ketua OSIS berdasarkan pertimbangan pribadi.'],
-    ['Langkah 4:', 'Tinjau kembali ringkasan pilihan dan tekan tombol konfirmasi hingga pemberitahuan berhasil ditampilkan.'],
-    ['KETENTUAN PENGGUNAAN:', 'Setiap kode token hanya berlaku untuk 1 (satu) kali penggunaan dan langsung kedaluwarsa setelah suara terkirim.'],
+    // R9: Banner Panduan (Merged A9:D9)
+    ['PANDUAN & TATA CARA PEMILIHAN SISWA (1 TOKEN BERLAKU 1 KALI PAKAI)'],
+    // R10: Petunjuk 1 (Merged A10:D10)
+    [`1. Akses portal bilik suara resmi melalui peramban: ${voteUrl}`],
+    // R11: Petunjuk 2 (Merged A11:D11)
+    ['2. Periksa baris nomor absen masing-masing pada tabel di bawah untuk melihat Kode Token Pemilihan Resmi.'],
+    // R12: Petunjuk 3 (Merged A12:D12)
+    ['3. Tentukan pilihan 1 (satu) Calon Ketua dan 1 (satu) Calon Wakil Ketua OSIS secara independen.'],
+    // R13: Petunjuk 4 (Merged A13:D13)
+    ['4. Tinjau kembali pilihan dan tekan tombol Kirim Suara Sah hingga bukti konfirmasi berhasil ditampilkan.'],
+    // R14: Ketentuan (Merged A14:D14)
+    ['*Ketentuan: Satu kode token hanya berlaku 1 kali pakai dan langsung kedaluwarsa setelah suara terkirim.'],
+    // R15: Baris kosong
     [],
-    // 4. Baris Header Tabel
+    // R16: Header Tabel Data (Index 15)
     [
       'No',
       'No. Absen',
@@ -75,7 +86,7 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
     ],
   ];
 
-  // 5. Baris Data Token & Absen Siswa
+  // R17 dst: Data Siswa
   tokens.forEach((t, idx) => {
     const plainToken = (t.plain && !t.plain.includes('*')) ? t.plain : (t.preview || t.id);
 
@@ -89,12 +100,25 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
 
   const ws = XLSX.utils.aoa_to_sheet(aoaData);
 
+  // Merge banner & guidance rows across columns A to D (col 0 to 3)
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // R1: Judul Utama
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }, // R2: Subjudul
+    { s: { r: 3, c: 0 }, e: { r: 3, c: 3 } }, // R4: Banner Info
+    { s: { r: 8, c: 0 }, e: { r: 8, c: 3 } }, // R9: Banner Panduan
+    { s: { r: 9, c: 0 }, e: { r: 9, c: 3 } }, // R10: Petunjuk 1
+    { s: { r: 10, c: 0 }, e: { r: 10, c: 3 } }, // R11: Petunjuk 2
+    { s: { r: 11, c: 0 }, e: { r: 11, c: 3 } }, // R12: Petunjuk 3
+    { s: { r: 12, c: 0 }, e: { r: 12, c: 3 } }, // R13: Petunjuk 4
+    { s: { r: 13, c: 0 }, e: { r: 13, c: 3 } }, // R14: Ketentuan
+  ];
+
   // Lebar kolom rapi dan proporsional
   ws['!cols'] = [
-    { wch: 8 },  // No
-    { wch: 16 }, // No. Absen
-    { wch: 32 }, // Kode Token Pemilihan (Lengkap)
-    { wch: 45 }, // Tautan Bilik Suara
+    { wch: 8 },  // Kolom A: No
+    { wch: 18 }, // Kolom B: No. Absen / Nama Kelas / Value
+    { wch: 34 }, // Kolom C: Kode Token Pemilihan / Label Kanan
+    { wch: 48 }, // Kolom D: Tautan Bilik Suara / Value Kanan
   ];
 
   const wb = XLSX.utils.book_new();
