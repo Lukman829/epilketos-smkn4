@@ -11,49 +11,77 @@ export interface TokenExportItem {
   revoked_reason?: string | null;
 }
 
-export function exportClassTokensToExcel(params: {
+export interface ClassExcelExportParams {
   className: string;
   tokens: TokenExportItem[];
+  voterQuota?: number;
+  homeroomTeacher?: string;
+  electionDate?: string;
+  electionTime?: string;
+  electionVenue?: string;
   voteUrl?: string;
-  eventDate?: string;
   schoolName?: string;
   academicYear?: string;
-}) {
+  specialNotes?: string;
+}
+
+export function exportClassTokensToExcel(params: ClassExcelExportParams) {
   const {
     className,
     tokens,
+    voterQuota = tokens.length || 36,
+    homeroomTeacher = '...........................................',
+    electionDate = 'Senin, 26 Oktober 2026',
+    electionTime = '08:00 - 14:00 WIB',
+    electionVenue = 'Bilik Suara Digital (Lab Komputer / Smartphone Masing-Masing)',
     voteUrl = typeof window !== 'undefined' ? `${window.location.origin}/vote` : 'https://epilketos-smkn4.vercel.app/vote',
-    eventDate = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
     schoolName = 'SMK NEGERI 4 KOTA SERANG',
     academicYear = 'Masa Bakti 2026/2027',
   } = params;
 
   if (tokens.length === 0) {
-    alert('Belum ada token untuk kelas ini yang dapat diekspor.');
+    alert('Belum ada token untuk kelas ini yang dapat diekspor. Silakan lakukan batch generate terlebih dahulu.');
     return;
   }
 
-  const headerRows = [
-    ['PEMILIHAN KETUA & WAKIL KETUA OSIS — ' + schoolName],
-    ['DAFTAR RESMI DISTRIBUSI TOKEN BILIK SUARA DIGITAL (' + academicYear + ')'],
-    [`Kelas: ${className}`, `Jumlah DPT: ${tokens.length} Siswa`, `Tanggal: ${eventDate}`, 'Status: RESMI & RAHASIA'],
-    [`Tautan Bilik Suara: ${voteUrl}`],
-    ['Catatan Keamanan: Setiap token bersifat rahasia dan hanya dapat digunakan untuk 1 (satu) kali pemberian suara sah.'],
-    [], // Pemisah baris kosong
+  const teacherNameDisplay = homeroomTeacher.trim() ? homeroomTeacher.trim() : '...........................................';
+
+  const aoaData: (string | number)[][] = [
+    // 1. Header Judul Resmi
+    [`PEMILIHAN KETUA & WAKIL KETUA OSIS — ${schoolName}`],
+    [`LEMBAR RESMI DISTRIBUSI TOKEN BILIK SUARA DIGITAL (${academicYear})`],
+    [],
+    // 2. Blok Identitas Kelas & Pelaksanaan
+    ['INFORMASI KELAS & JADWAL PELAKSANAAN:'],
+    ['Nama Kelas:', className, '', 'Wali Kelas / Pendamping:', teacherNameDisplay],
+    ['Alokasi DPT:', `${tokens.length} Siswa (Kuota: ${voterQuota})`, '', 'Hari, Tanggal Pemilihan:', electionDate],
+    ['Tautan Bilik Suara:', voteUrl, '', 'Waktu Pelaksanaan:', electionTime],
+    ['Lokasi / Akses:', electionVenue, '', 'Status Dokumen:', 'RESMI & RAHASIA'],
+    [],
+    // 3. Blok Panduan & Tata Cara Memilih (Dibaca Wali Kelas & Siswa sebelum tabel)
+    ['PANDUAN & TATA CARA MEMILIH DI BILIK SUARA DIGITAL (WAJIB DIBACA SISWA):'],
+    ['Langkah 1:', `Buka peramban (browser) di smartphone atau komputer, lalu akses: ${voteUrl}`],
+    ['Langkah 2:', 'Cari nomor absen Anda pada tabel di bawah, lalu salin/ketik Kode Token Pemilihan resmi yang tertera.'],
+    ['Langkah 3:', 'Tentukan pilihan 1 (satu) Calon Ketua OSIS dan 1 (satu) Calon Wakil Ketua OSIS berdasarkan nurani Anda.'],
+    ['Langkah 4:', 'Tinjau kembali ringkasan pilihan Anda, lalu tekan tombol "Kirim Suara Sah" sampai muncul konfirmasi.'],
+    ['PERINGATAN KERAHASIAAN:', 'Setiap token hanya berlaku untuk 1 KALI vote. Kode token bersifat RAHASIA dan tidak boleh diberikan kepada siapa pun!'],
+    [],
+    // 4. Baris Header Tabel
     [
       'No',
-      'No. Urut / Nama Pemilih',
-      'Kode Token Resmi (Lengkap Tanpa Sensor)',
-      'Kelas',
-      'Status Token',
+      'No. Absen',
+      'Nama Siswa / Pemilih',
+      'Kode Token Pemilihan (Lengkap Tanpa Sensor)',
+      'Status Hak Suara',
       'Waktu Pencoblosan',
-      'Tautan Bilik Suara Digital',
+      'Paraf / Ceklis Pemilih',
       'Keterangan & Petunjuk',
     ],
   ];
 
-  const dataRows = tokens.map((t, idx) => {
-    // Make sure token is fully uncensored
+  // 5. Baris Data Token & Absen Siswa
+  tokens.forEach((t, idx) => {
+    // Pastikan token lengkap tanpa disensor
     const plainToken = (t.plain && !t.plain.includes('*')) ? t.plain : (t.preview || t.id);
 
     let statusLabel = 'AKTIF / SIAP COBLOS';
@@ -62,42 +90,42 @@ export function exportClassTokensToExcel(params: {
 
     const usedTime = t.used_at ? new Date(t.used_at).toLocaleString('id-ID') : '-';
     const note = t.status === 'used'
-      ? 'Suara telah tercatat secara anonim'
+      ? 'Suara telah sah masuk secara anonim'
       : t.status === 'revoked'
-      ? `Dibatalkan: ${t.revoked_reason || 'Pencabutan panitia'}`
-      : 'Buka bilik suara dan masukkan kode token ini';
+      ? `Batal: ${t.revoked_reason || 'Dicabut panitia'}`
+      : 'Masukkan di https://epilketos-smkn4.vercel.app/vote';
 
-    return [
+    aoaData.push([
       idx + 1,
-      `Siswa Absen ${String(idx + 1).padStart(2, '0')}`,
+      `Absen ${String(idx + 1).padStart(2, '0')}`,
+      '........................................', // Kolom nama siswa untuk diisi wali kelas
       plainToken,
-      t.class_name || className,
       statusLabel,
       usedTime,
-      voteUrl,
+      t.status === 'used' ? '[ SUDAH ]' : '[       ]', // Kolom tanda tangan / paraf ceklis
       note,
-    ];
+    ]);
   });
 
-  const fullSheetData = [...headerRows, ...dataRows];
-  const ws = XLSX.utils.aoa_to_sheet(fullSheetData);
+  const ws = XLSX.utils.aoa_to_sheet(aoaData);
 
-  // Lebar kolom rapi dan tidak terpotong
+  // Lebar kolom rapi dan proporsional (tidak ada teks terpotong)
   ws['!cols'] = [
     { wch: 6 },  // No
-    { wch: 24 }, // No. Urut / Nama Pemilih
-    { wch: 26 }, // Kode Token Resmi (Lengkap Tanpa Sensor)
-    { wch: 18 }, // Kelas
-    { wch: 20 }, // Status Token
+    { wch: 14 }, // No. Absen
+    { wch: 32 }, // Nama Siswa / Pemilih
+    { wch: 26 }, // Kode Token Pemilihan (Lengkap Tanpa Sensor)
+    { wch: 22 }, // Status Hak Suara
     { wch: 22 }, // Waktu Pencoblosan
-    { wch: 42 }, // Tautan Bilik Suara
-    { wch: 38 }, // Keterangan & Petunjuk
+    { wch: 18 }, // Paraf / Ceklis Pemilih
+    { wch: 36 }, // Keterangan & Petunjuk
   ];
 
   const wb = XLSX.utils.book_new();
   const safeClassName = className.replace(/[^a-zA-Z0-9_-]/g, '_');
   XLSX.utils.book_append_sheet(wb, ws, `Token_${safeClassName}`.slice(0, 31));
 
-  const fileName = `Daftar_Token_PILKETOS_${safeClassName}_${Date.now()}.xlsx`;
+  // Nama file profesional 1 file per kelas
+  const fileName = `DISTRIBUSI_TOKEN_PILKETOS_${safeClassName}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }

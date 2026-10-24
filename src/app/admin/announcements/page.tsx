@@ -217,8 +217,13 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
     exportClassTokensToExcel({
       className: currentClass.name,
       tokens,
+      voterQuota: voterCount,
+      homeroomTeacher,
+      electionDate,
+      electionTime,
+      electionVenue,
       voteUrl,
-      eventDate: electionDate,
+      specialNotes,
     });
   };
 
@@ -496,8 +501,8 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <KeyRound className="w-4 h-4 text-indigo-600" />
-              <span>Daftar Token Siswa ({tokens.length})</span>
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              <span>Format Excel & Token Kelas ({tokens.length})</span>
             </button>
           </div>
 
@@ -634,118 +639,222 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
             </div>
           )}
 
-          {/* TAB 3: Uncensored Token Table List */}
+          {/* TAB 3: Excel Distribution & Uncensored Token List */}
           {activeTab === 'tokens' && (
-            <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                <div>
-                  <h3 className="text-sm font-black text-slate-900">
-                    Daftar Token Siswa {currentClass?.name} (Lengkap Tanpa Sensor)
+            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
+              {/* Header Box & Download Action */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>Distribusi 1 File Excel per Kelas</span>
+                  </div>
+                  <h3 className="text-base font-black text-emerald-950">
+                    File Excel Distribusi: {currentClass?.name}
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    Total {tokens.length} token diterbitkan untuk kelas ini. Seluruh token ditampilkan utuh tanpa sensor.
+                  <p className="text-xs text-emerald-800/80">
+                    Format file Excel telah dilengkapi informasi kelas, tata cara vote, dan tabel nomor absen beserta token lengkap tanpa sensor.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-                    <input
-                      type="text"
-                      placeholder="Cari kode token..."
-                      value={tokenSearch}
-                      onChange={(e) => setTokenSearch(e.target.value)}
-                      className="pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <button
-                    onClick={handleExportExcel}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center gap-1.5 border border-emerald-200"
-                  >
-                    <FileSpreadsheet className="w-3.5 h-3.5" />
-                    <span>Export Excel</span>
-                  </button>
-                </div>
+                <button
+                  onClick={handleExportExcel}
+                  disabled={tokens.length === 0}
+                  className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50 flex-shrink-0"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>📥 Unduh File Excel {currentClass?.name} (.xlsx)</span>
+                </button>
               </div>
 
-              {tokens.length === 0 ? (
-                <div className="p-12 text-center space-y-3 rounded-2xl bg-slate-50 border border-slate-200/60">
-                  <KeyRound className="w-10 h-10 text-slate-300 mx-auto" />
-                  <p className="text-sm font-bold text-slate-700">Belum Ada Token untuk Kelas Ini</p>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Gunakan tombol formulir di sebelah kiri untuk menerbitkan batch token untuk {currentClass?.name}.
-                  </p>
+              {/* LIVE EXCEL PREVIEW BOX (Sebelum Tabel: Nama Kelas, Jadwal & Tata Cara Vote) */}
+              <div className="rounded-2xl border-2 border-emerald-300/80 bg-white overflow-hidden shadow-xs">
+                {/* Excel Tab Bar Simulation */}
+                <div className="px-4 py-2 bg-emerald-700 text-white text-[11px] font-bold flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <FileSpreadsheet className="w-4 h-4" />
+                    <span>Lembar Kerja: Token_{currentClass?.name.replace(/[^a-zA-Z0-9_-]/g, '_')}</span>
+                  </span>
+                  <span className="text-emerald-200 text-[10px] font-mono">Pratinjau Struktur File Excel</span>
                 </div>
-              ) : (
-                <div className="overflow-x-auto border border-slate-200 rounded-2xl">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-black uppercase text-[10px] tracking-wider">
-                      <tr>
-                        <th className="py-3 px-3 w-12 text-center">No</th>
-                        <th className="py-3 px-3">No. Absen / Pemilih</th>
-                        <th className="py-3 px-3">Kode Token Resmi (Lengkap)</th>
-                        <th className="py-3 px-3">Status</th>
-                        <th className="py-3 px-3 text-right">Salin</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                      {filteredTokens.map((t, idx) => {
-                        const plainToken = t.plain || t.preview;
-                        return (
-                          <tr key={t.id} className="hover:bg-slate-50/70 transition-colors">
-                            <td className="py-2.5 px-3 text-center text-slate-400 font-mono">
-                              {idx + 1}
-                            </td>
-                            <td className="py-2.5 px-3 font-semibold text-slate-800">
-                              Siswa Absen {String(idx + 1).padStart(2, '0')}
-                            </td>
-                            <td className="py-2.5 px-3">
-                              <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200/80 font-mono font-bold text-blue-900 tracking-wider">
-                                {plainToken}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-3">
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                  t.status === 'active'
-                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                    : t.status === 'used'
-                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                    : 'bg-rose-50 text-rose-700 border border-rose-200'
-                                }`}
-                              >
-                                {t.status === 'active'
-                                  ? 'Siap Coblos'
-                                  : t.status === 'used'
-                                  ? 'Sudah Memilih'
-                                  : 'Dibatalkan'}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-3 text-right">
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(plainToken);
-                                  setCopiedTokenId(t.id);
-                                  setTimeout(() => setCopiedTokenId(null), 1500);
-                                }}
-                                className="p-1.5 rounded-lg hover:bg-slate-200/60 text-slate-600 transition-colors"
-                                title="Salin Token"
-                              >
-                                {copiedTokenId === t.id ? (
-                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                ) : (
-                                  <Copy className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-                            </td>
+
+                <div className="p-6 space-y-5 bg-gradient-to-b from-emerald-50/30 to-white">
+                  {/* Top Titles in Excel */}
+                  <div className="text-center space-y-0.5 pb-3 border-b border-emerald-200/60">
+                    <p className="text-sm font-black text-slate-900 tracking-tight">
+                      PEMILIHAN KETUA & WAKIL KETUA OSIS — SMK NEGERI 4 KOTA SERANG
+                    </p>
+                    <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                      LEMBAR RESMI DISTRIBUSI TOKEN BILIK SUARA DIGITAL (MASA BAKTI 2026/2027)
+                    </p>
+                  </div>
+
+                  {/* Section A: Informasi Kelas & Pelaksanaan (Sebelum Tabel) */}
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3 text-xs">
+                    <p className="font-black text-slate-900 uppercase tracking-wider text-[11px] text-blue-700 flex items-center gap-1.5">
+                      <UserCheck className="w-4 h-4" />
+                      <span>1. INFORMASI KELAS & JADWAL PELAKSANAAN:</span>
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 font-mono text-[11px]">
+                      <div className="flex justify-between border-b border-slate-100 pb-1">
+                        <span className="text-slate-500 font-sans">Nama Kelas:</span>
+                        <span className="font-bold text-slate-900">{currentClass?.name}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-100 pb-1">
+                        <span className="text-slate-500 font-sans">Wali Kelas / Pendamping:</span>
+                        <span className="font-bold text-slate-900">{homeroomTeacher || '...........................................'}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-100 pb-1">
+                        <span className="text-slate-500 font-sans">Alokasi DPT:</span>
+                        <span className="font-bold text-slate-900">{tokens.length || voterCount} Siswa</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-100 pb-1">
+                        <span className="text-slate-500 font-sans">Hari, Tanggal Pemilihan:</span>
+                        <span className="font-bold text-slate-900">{electionDate}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-100 pb-1">
+                        <span className="text-slate-500 font-sans">Tautan Bilik Suara:</span>
+                        <span className="font-bold text-blue-700 underline">{voteUrl}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-100 pb-1">
+                        <span className="text-slate-500 font-sans">Waktu Pelaksanaan:</span>
+                        <span className="font-bold text-slate-900">{electionTime}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section B: Panduan & Tata Cara Vote (Sebelum Tabel) */}
+                  <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200 text-xs space-y-2">
+                    <p className="font-black text-amber-950 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4 text-amber-700" />
+                      <span>2. PANDUAN & TATA CARA MEMILIH (WAJIB DIBACA WALI KELAS & SISWA):</span>
+                    </p>
+                    <div className="space-y-1.5 text-[11px] text-amber-900/90 font-medium">
+                      <p>• <strong>Langkah 1:</strong> Buka peramban (browser) di smartphone atau komputer, lalu akses tautan bilik suara: <strong className="text-blue-700 underline">{voteUrl}</strong></p>
+                      <p>• <strong>Langkah 2:</strong> Cari nomor absen Anda pada tabel di bawah, lalu salin/ketik <strong>Kode Token Pemilihan</strong> resmi yang tertera.</p>
+                      <p>• <strong>Langkah 3:</strong> Tentukan pilihan 1 (satu) Calon Ketua OSIS dan 1 (satu) Calon Wakil Ketua OSIS berdasarkan nurani Anda.</p>
+                      <p>• <strong>Langkah 4:</strong> Tinjau kembali ringkasan pilihan Anda, lalu tekan tombol <strong>"Kirim Suara Sah"</strong> hingga muncul konfirmasi "SUARAMU TELAH TERCATAT".</p>
+                      <p className="pt-1 text-[10px] text-amber-950 font-bold italic">
+                        * Peringatan: Setiap token hanya berlaku untuk 1 KALI vote. Bersifat RAHASIA dan tidak boleh diberikan kepada siapa pun!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section C: Tabel Absen dan Token Siswa (Tanpa Sensor) */}
+                <div className="p-6 pt-0 space-y-4 bg-white">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-200">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                      3. TABEL DAFTAR NOMOR ABSEN & KODE TOKEN RESMI (LENGKAP TANPA SENSOR)
+                    </h4>
+
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                      <input
+                        type="text"
+                        placeholder="Cari kode token atau absen..."
+                        value={tokenSearch}
+                        onChange={(e) => setTokenSearch(e.target.value)}
+                        className="pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  {tokens.length === 0 ? (
+                    <div className="p-12 text-center space-y-3 rounded-2xl bg-slate-50 border border-slate-200/60">
+                      <KeyRound className="w-10 h-10 text-slate-300 mx-auto" />
+                      <p className="text-sm font-bold text-slate-700">Belum Ada Token untuk Kelas Ini</p>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                        Gunakan formulir di sebelah kiri untuk menerbitkan batch token untuk {currentClass?.name}.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                      <table className="w-full text-left text-xs font-sans">
+                        <thead className="bg-slate-100 border-b border-slate-200 text-slate-700 font-black uppercase text-[10px] tracking-wider">
+                          <tr>
+                            <th className="py-2.5 px-3 w-12 text-center">No</th>
+                            <th className="py-2.5 px-3">No. Absen</th>
+                            <th className="py-2.5 px-3">Nama Siswa / DPT</th>
+                            <th className="py-2.5 px-3">Kode Token Resmi (Lengkap)</th>
+                            <th className="py-2.5 px-3">Status Hak Suara</th>
+                            <th className="py-2.5 px-3">Waktu Coblos</th>
+                            <th className="py-2.5 px-3 text-center">Paraf / Ceklis</th>
+                            <th className="py-2.5 px-3 text-right">Salin</th>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                          {filteredTokens.map((t, idx) => {
+                            const plainToken = t.plain || t.preview;
+                            return (
+                              <tr key={t.id} className="hover:bg-emerald-50/40 transition-colors">
+                                <td className="py-2 px-3 text-center text-slate-400 font-mono text-[11px]">
+                                  {idx + 1}
+                                </td>
+                                <td className="py-2 px-3 font-bold text-slate-900 font-mono text-[11px]">
+                                  Absen {String(idx + 1).padStart(2, '0')}
+                                </td>
+                                <td className="py-2 px-3 text-slate-400 font-mono text-[11px]">
+                                  ........................................
+                                </td>
+                                <td className="py-2 px-3">
+                                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-300 font-mono font-black text-emerald-900 tracking-wider text-[11px]">
+                                    {plainToken}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3">
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                      t.status === 'active'
+                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                        : t.status === 'used'
+                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                        : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                    }`}
+                                  >
+                                    {t.status === 'active'
+                                      ? 'Siap Coblos'
+                                      : t.status === 'used'
+                                      ? 'Sudah Memilih'
+                                      : 'Dibatalkan'}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3 text-[11px] text-slate-500 font-mono">
+                                  {t.used_at ? new Date(t.used_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                </td>
+                                <td className="py-2 px-3 text-center text-[11px] font-mono text-slate-400">
+                                  {t.status === 'used' ? (
+                                    <span className="text-emerald-600 font-bold">[ SUDAH ]</span>
+                                  ) : (
+                                    '[       ]'
+                                  )}
+                                </td>
+                                <td className="py-2 px-3 text-right">
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(plainToken);
+                                      setCopiedTokenId(t.id);
+                                      setTimeout(() => setCopiedTokenId(null), 1500);
+                                    }}
+                                    className="p-1.5 rounded-lg hover:bg-slate-200/60 text-slate-600 transition-colors"
+                                    title="Salin Token"
+                                  >
+                                    {copiedTokenId === t.id ? (
+                                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                    ) : (
+                                      <Copy className="w-3.5 h-3.5" />
+                                    )}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>

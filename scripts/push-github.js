@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'feat: add class announcement and token distribution submenu with uncensored neat excel export';
+  const commitMsg = 'feat: per-class excel distribution with header metadata, voting instructions, and uncensored attendance table';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,
