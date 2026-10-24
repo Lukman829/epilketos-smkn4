@@ -40,7 +40,7 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
   } = params;
 
   if (tokens.length === 0) {
-    alert('Belum ada token untuk kelas ini yang dapat diekspor. Silakan lakukan batch generate terlebih dahulu.');
+    alert('Belum ada token untuk kelas ini yang dapat diekspor. Silakan terbitkan token terlebih dahulu.');
     return;
   }
 
@@ -48,36 +48,35 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
 
   const aoaData: (string | number)[][] = [
     // 1. Header Judul Resmi
-    [`PEMILIHAN KETUA & WAKIL KETUA OSIS — ${schoolName}`],
-    [`LEMBAR RESMI DISTRIBUSI TOKEN BILIK SUARA DIGITAL (${academicYear})`],
+    [`PEMILIHAN KETUA DAN WAKIL KETUA OSIS — ${schoolName}`],
+    [`DAFTAR DISTRIBUSI TOKEN PEMILIHAN OSIS (${academicYear})`],
     [],
     // 2. Blok Identitas Kelas & Pelaksanaan
-    ['INFORMASI KELAS & JADWAL PELAKSANAAN:'],
+    ['INFORMASI KELAS DAN JADWAL PELAKSANAAN:'],
     ['Nama Kelas:', className, '', 'Wali Kelas / Pendamping:', teacherNameDisplay],
-    ['Alokasi DPT:', `${tokens.length} Siswa (Kuota: ${voterQuota})`, '', 'Hari, Tanggal Pemilihan:', electionDate],
+    ['Jumlah DPT:', `${tokens.length} Siswa (Kuota: ${voterQuota})`, '', 'Hari, Tanggal Pemilihan:', electionDate],
     ['Tautan Bilik Suara:', voteUrl, '', 'Waktu Pelaksanaan:', electionTime],
-    ['Lokasi / Akses:', electionVenue, '', 'Status Dokumen:', 'RESMI & RAHASIA'],
+    ['Lokasi / Akses:', electionVenue, '', 'Status Dokumen:', 'RESMI DAN RAHASIA'],
     [],
     // 3. Blok Panduan & Tata Cara Memilih (Dibaca Wali Kelas & Siswa sebelum tabel)
-    ['PANDUAN & TATA CARA MEMILIH DI BILIK SUARA DIGITAL (WAJIB DIBACA SISWA):'],
-    ['Langkah 1:', `Buka peramban (browser) di smartphone atau komputer, lalu akses: ${voteUrl}`],
-    ['Langkah 2:', 'Cari nomor absen Anda pada tabel di bawah, lalu salin/ketik Kode Token Pemilihan resmi yang tertera.'],
-    ['Langkah 3:', 'Tentukan pilihan 1 (satu) Calon Ketua OSIS dan 1 (satu) Calon Wakil Ketua OSIS berdasarkan nurani Anda.'],
-    ['Langkah 4:', 'Tinjau kembali ringkasan pilihan Anda, lalu tekan tombol "Kirim Suara Sah" sampai muncul konfirmasi.'],
-    ['PERINGATAN KERAHASIAAN:', 'Setiap token hanya berlaku untuk 1 KALI vote. Kode token bersifat RAHASIA dan tidak boleh diberikan kepada siapa pun!'],
+    ['PANDUAN DAN TATA CARA PEMILIHAN (HAK SUARA SISWA):'],
+    ['Langkah 1:', `Akses portal bilik suara digital melalui peramban pada tautan: ${voteUrl}`],
+    ['Langkah 2:', 'Periksa kode token pemilihan resmi pada baris nomor absen Anda di bawah.'],
+    ['Langkah 3:', 'Tentukan pilihan 1 (satu) Calon Ketua dan 1 (satu) Calon Wakil Ketua OSIS berdasarkan pertimbangan pribadi.'],
+    ['Langkah 4:', 'Tinjau kembali ringkasan pilihan dan tekan tombol konfirmasi hingga pemberitahuan berhasil ditampilkan.'],
+    ['KETENTUAN KERAHASIAAN:', 'Setiap kode token bersifat rahasia dan hanya berlaku untuk 1 (satu) kali penggunaan.'],
     [],
     // 4. Baris Header Tabel
     [
       'No',
       'No. Absen',
-      'Kode Token Pemilihan (Lengkap Tanpa Sensor)',
+      'Kode Token Pemilihan (Lengkap)',
       'Tautan Bilik Suara',
     ],
   ];
 
   // 5. Baris Data Token & Absen Siswa
   tokens.forEach((t, idx) => {
-    // Pastikan token lengkap tanpa disensor
     const plainToken = (t.plain && !t.plain.includes('*')) ? t.plain : (t.preview || t.id);
 
     aoaData.push([
@@ -90,11 +89,11 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
 
   const ws = XLSX.utils.aoa_to_sheet(aoaData);
 
-  // Lebar kolom rapi dan proporsional (tidak ada teks terpotong)
+  // Lebar kolom rapi dan proporsional
   ws['!cols'] = [
     { wch: 8 },  // No
     { wch: 16 }, // No. Absen
-    { wch: 30 }, // Kode Token Pemilihan (Lengkap Tanpa Sensor)
+    { wch: 32 }, // Kode Token Pemilihan (Lengkap)
     { wch: 45 }, // Tautan Bilik Suara
   ];
 
@@ -102,7 +101,7 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
   const safeClassName = className.replace(/[^a-zA-Z0-9_-]/g, '_');
   XLSX.utils.book_append_sheet(wb, ws, `Token_${safeClassName}`.slice(0, 31));
 
-  // Nama file profesional 1 file per kelas
+  // Nama file resmi per kelas
   const fileName = `DISTRIBUSI_TOKEN_PILKETOS_${safeClassName}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }

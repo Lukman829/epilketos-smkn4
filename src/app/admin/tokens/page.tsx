@@ -195,10 +195,10 @@ export default function AdminTokensPage() {
         <div className="space-y-1">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <KeyRound className="w-6 h-6 text-blue-600" />
-            <span>Manajemen Token Kriptografis</span>
+            <span>Manajemen Token Pemilihan</span>
           </h1>
           <p className="text-xs text-slate-500">
-            Penerbitan acak, pencegahan duplikasi, pencabutan token, dan ekspor distribusi
+            Penerbitan token, pencabutan token, dan pengelolaan data distribusi per kelas
           </p>
         </div>
 
@@ -225,7 +225,7 @@ export default function AdminTokensPage() {
             className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors flex items-center gap-2 shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            <span>Generate Batch</span>
+            <span>Terbitkan Batch Token</span>
           </button>
         </div>
       </div>

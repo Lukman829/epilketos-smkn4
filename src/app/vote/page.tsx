@@ -633,10 +633,10 @@ export default function VotePage() {
                   Konfirmasi Resmi Bilik Suara
                 </span>
                 <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                  SUARAMU TELAH TERCATAT.
+                  HAK SUARA ANDA TELAH TERCATAT
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                  Terima kasih telah berpartisipasi aktif dalam demokrasi digital SMKN 4 Kota Serang. Pilihan Anda telah tersimpan secara anonim dan aman di dalam database.
+                  Terima kasih atas partisipasi Anda dalam Pemilihan Ketua dan Wakil Ketua OSIS SMKN 4 Kota Serang. Pilihan Anda telah tersimpan secara anonim sesuai asas kerahasiaan pemilihan.
                 </p>
               </div>
 

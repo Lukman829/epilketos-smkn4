@@ -106,7 +106,7 @@ export default function HomePage() {
                     <span className="text-blue-600">MASA DEPAN KITA.</span>
                   </h1>
                   <p className="text-lg sm:text-xl text-slate-600 font-normal max-w-xl mx-auto lg:mx-0 leading-relaxed pt-2">
-                    Pemilihan Ketua dan Wakil Ketua OSIS SMKN 4 Kota Serang. Pengalaman demokrasi digital sekolah berstandar kelas dunia, aman, rahasia, dan transparan.
+                    Pemilihan Ketua dan Wakil Ketua OSIS SMKN 4 Kota Serang secara digital yang langsung, umum, bebas, rahasia, jujur, dan adil.
                   </p>
                 </div>
 
@@ -367,11 +367,11 @@ export default function HomePage() {
                 </div>
 
                 <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                  Kerahasiaan Suara Anda Terlindungi Mutlak.
+                  Kerahasiaan Hak Suara Pemilih Terjamin.
                 </h2>
 
                 <p className="text-slate-600 text-sm leading-relaxed">
-                  E-PILKETOS memisahkan verifikasi token dari surat suara (ballot). Panitia dapat melihat statistik agregat kehadiran per kelas, namun tidak memiliki akses teknis apa pun untuk mengaitkan nama siswa atau nomor token dengan pilihan kandidat yang dicoblos.
+                  E-PILKETOS memisahkan verifikasi token dari surat suara (ballot). Panitia dapat melihat statistik kehadiran per kelas, namun tidak memiliki akses teknis untuk mengaitkan identitas siswa atau nomor token dengan pilihan kandidat yang dipilih.
                 </p>
 
                 <div className="space-y-2.5 pt-2">

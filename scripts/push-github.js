@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'refactor: simplify excel export and table to No, No Absen, uncensored token, and vote url';
+  const commitMsg = 'style: refine tone to formal, professional academic standard across web copy and exports';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,

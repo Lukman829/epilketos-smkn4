@@ -169,32 +169,32 @@ export default function AdminAnnouncementsPage() {
     const teacherSalutation = homeroomTeacher ? `Bapak/Ibu ${homeroomTeacher}` : 'Bapak/Ibu Wali Kelas';
 
     return (
-`📢 *PENGUMUMAN RESMI E-PILKETOS SMKN 4 KOTA SERANG*
-*Masa Bakti 2026/2027*
+`PEMBERITAHUAN PELAKSANAAN PEMILIHAN KETUA DAN WAKIL KETUA OSIS
+SMK NEGERI 4 KOTA SERANG
+Masa Bakti 2026/2027
 
-Yth. ${teacherSalutation} & Seluruh Siswa/i *${className}*,
+Yth. ${teacherSalutation} dan Seluruh Peserta Didik Kelas ${className},
 
-Sehubungan dengan dilaksanakannya Pemilihan Ketua dan Wakil Ketua OSIS SMK Negeri 4 Kota Serang secara digital, rahasia, jujur, dan adil, berikut kami sampaikan rincian pelaksanaannya:
+Sehubungan dengan pelaksanaan Pemilihan Ketua dan Wakil Ketua OSIS SMK Negeri 4 Kota Serang secara digital, berikut kami sampaikan jadwal dan ketentuan pelaksanaan:
 
-🗓️ *Hari, Tanggal:* ${electionDate}
-⏰ *Waktu:* ${electionTime}
-📍 *Metode:* ${electionVenue}
-🌐 *Tautan Bilik Suara:*
+• Hari, Tanggal: ${electionDate}
+• Waktu Pelaksanaan: ${electionTime}
+• Lokasi / Akses: ${electionVenue}
+• Alamat Bilik Suara Digital:
 ${voteUrl}
 
-════════════════════════════
-📋 *TATA CARA MEMILIH:*
-1️⃣ Buka tautan bilik suara: ${voteUrl}
-2️⃣ Masukkan *Kode Token Resmi* masing-masing siswa (cek daftar token terlampir).
-3️⃣ Tentukan pilihan 1 Calon Ketua & 1 Calon Wakil Ketua OSIS.
-4️⃣ Periksa kembali pilihan Anda, lalu tekan *Kirim Suara*.
+TATA CARA PENGGUNAAN HAK SUARA:
+1. Akses alamat bilik suara: ${voteUrl}
+2. Masukkan Kode Token Pemilihan resmi yang tertera pada daftar distribusi kelas.
+3. Tentukan pilihan 1 Calon Ketua dan 1 Calon Wakil Ketua OSIS.
+4. Periksa ringkasan pilihan dan selesaikan pengiriman suara.
 
-⚠️ *CATATAN PENTING:*
+KETENTUAN:
 ${specialNotes}
 
-Mari gunakan hak suara kita secara bijak untuk masa depan SMKN 4 Kota Serang yang lebih hebat dan berprestasi! 🚀✨
+Demikian pemberitahuan ini disampaikan. Diharapkan seluruh peserta didik dapat menggunakan hak pilihnya secara tertib dan bertanggung jawab.
 
-_Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
+Komisi Pemilihan OSIS SMKN 4 Kota Serang`
     );
   }, [currentClass, homeroomTeacher, electionDate, electionTime, electionVenue, voteUrl, specialNotes]);
 
@@ -252,15 +252,14 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
       <div className="print:hidden flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-white border border-slate-200 shadow-sm">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Submenu Khusus Pengumuman & Distribusi</span>
+            <span>Distribusi Token &amp; Pengumuman Resmi</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <Megaphone className="w-6 h-6 text-blue-600" />
-            <span>Pengumuman & Distribusi Token Kelas</span>
+            <span>Pengumuman &amp; Distribusi Token Kelas</span>
           </h1>
           <p className="text-xs text-slate-500">
-            Formulir batch token per kelas, template surat resmi A4, siaran pesan WhatsApp, dan ekspor Excel rapi tanpa sensor.
+            Penerbitan token per kelas, dokumen resmi pengumuman, teks pemberitahuan, dan rekapitulasi data distribusi.
           </p>
         </div>
 
@@ -271,7 +270,7 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
             className="px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center gap-2 transition-colors border border-emerald-200 disabled:opacity-50"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            <span>Unduh Excel Rapi</span>
+            <span>Unduh Rekapitulasi Excel</span>
           </button>
 
           <button
@@ -279,7 +278,7 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
             className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 transition-colors shadow-sm"
           >
             <Printer className="w-4 h-4" />
-            <span>Cetak Dokumen</span>
+            <span>Cetak Dokumen Resmi</span>
           </button>
         </div>
       </div>
@@ -433,15 +432,14 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
                 type="button"
                 onClick={handleGenerateBatch}
                 disabled={isGenerating}
-                className="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/10 disabled:opacity-50"
+                className="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/10 disabled:opacity-50"
               >
-                <Sparkles className="w-4 h-4" />
                 <span>
                   {isGenerating
-                    ? 'Menerbitkan Token...'
+                    ? 'Sedang Memproses...'
                     : tokens.length > 0
-                    ? `Terbitkan Ulang / Tambah ${voterCount} Token`
-                    : `⚡ Generate Batch ${voterCount} Token ${currentClass?.name || ''}`}
+                    ? `Terbitkan Tambahan (${voterCount} Token)`
+                    : `Terbitkan Token (${voterCount} Token - ${currentClass?.name || ''})`}
                 </span>
               </button>
             </div>
@@ -455,11 +453,11 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
             <div className="grid grid-cols-2 gap-3 text-center">
               <div className="p-3 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
                 <p className="text-xl font-black text-blue-600">{activeTokenCount}</p>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Siap Coblos</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Belum Digunakan</p>
               </div>
               <div className="p-3 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
                 <p className="text-xl font-black text-emerald-600">{usedTokenCount}</p>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Telah Mencoblos</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sudah Digunakan</p>
               </div>
             </div>
           </div>
@@ -682,18 +680,18 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
                   {/* Top Titles in Excel */}
                   <div className="text-center space-y-0.5 pb-3 border-b border-emerald-200/60">
                     <p className="text-sm font-black text-slate-900 tracking-tight">
-                      PEMILIHAN KETUA & WAKIL KETUA OSIS — SMK NEGERI 4 KOTA SERANG
+                      PEMILIHAN KETUA DAN WAKIL KETUA OSIS — SMK NEGERI 4 KOTA SERANG
                     </p>
                     <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
-                      LEMBAR RESMI DISTRIBUSI TOKEN BILIK SUARA DIGITAL (MASA BAKTI 2026/2027)
+                      DAFTAR DISTRIBUSI TOKEN PEMILIHAN OSIS (MASA BAKTI 2026/2027)
                     </p>
                   </div>
 
                   {/* Section A: Informasi Kelas & Pelaksanaan (Sebelum Tabel) */}
                   <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3 text-xs">
-                    <p className="font-black text-slate-900 uppercase tracking-wider text-[11px] text-blue-700 flex items-center gap-1.5">
+                    <p className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-blue-700 flex items-center gap-1.5">
                       <UserCheck className="w-4 h-4" />
-                      <span>1. INFORMASI KELAS & JADWAL PELAKSANAAN:</span>
+                      <span>INFORMASI KELAS DAN JADWAL PELAKSANAAN</span>
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 font-mono text-[11px]">
                       <div className="flex justify-between border-b border-slate-100 pb-1">
@@ -724,18 +722,18 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
                   </div>
 
                   {/* Section B: Panduan & Tata Cara Vote (Sebelum Tabel) */}
-                  <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200 text-xs space-y-2">
-                    <p className="font-black text-amber-950 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                      <AlertCircle className="w-4 h-4 text-amber-700" />
-                      <span>2. PANDUAN & TATA CARA MEMILIH (WAJIB DIBACA WALI KELAS & SISWA):</span>
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                    <p className="font-bold text-slate-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4 text-slate-700" />
+                      <span>PANDUAN DAN TATA CARA PEMILIHAN (HAK SUARA SISWA)</span>
                     </p>
-                    <div className="space-y-1.5 text-[11px] text-amber-900/90 font-medium">
-                      <p>• <strong>Langkah 1:</strong> Buka peramban (browser) di smartphone atau komputer, lalu akses tautan bilik suara: <strong className="text-blue-700 underline">{voteUrl}</strong></p>
-                      <p>• <strong>Langkah 2:</strong> Cari nomor absen Anda pada tabel di bawah, lalu salin/ketik <strong>Kode Token Pemilihan</strong> resmi yang tertera.</p>
-                      <p>• <strong>Langkah 3:</strong> Tentukan pilihan 1 (satu) Calon Ketua OSIS dan 1 (satu) Calon Wakil Ketua OSIS berdasarkan nurani Anda.</p>
-                      <p>• <strong>Langkah 4:</strong> Tinjau kembali ringkasan pilihan Anda, lalu tekan tombol <strong>"Kirim Suara Sah"</strong> hingga muncul konfirmasi "SUARAMU TELAH TERCATAT".</p>
-                      <p className="pt-1 text-[10px] text-amber-950 font-bold italic">
-                        * Peringatan: Setiap token hanya berlaku untuk 1 KALI vote. Bersifat RAHASIA dan tidak boleh diberikan kepada siapa pun!
+                    <div className="space-y-1.5 text-[11px] text-slate-700 font-medium">
+                      <p>• <strong>Langkah 1:</strong> Akses portal bilik suara digital melalui peramban pada tautan: <strong className="text-blue-700 underline">{voteUrl}</strong></p>
+                      <p>• <strong>Langkah 2:</strong> Periksa kode token pemilihan resmi pada baris nomor absen Anda di bawah.</p>
+                      <p>• <strong>Langkah 3:</strong> Tentukan pilihan 1 (satu) Calon Ketua dan 1 (satu) Calon Wakil Ketua OSIS berdasarkan pertimbangan pribadi.</p>
+                      <p>• <strong>Langkah 4:</strong> Tinjau kembali ringkasan pilihan dan tekan tombol konfirmasi hingga pemberitahuan berhasil ditampilkan.</p>
+                      <p className="pt-1 text-[10px] text-slate-500 font-semibold italic">
+                        * Ketentuan: Kode token bersifat rahasia dan hanya berlaku untuk 1 (satu) kali penggunaan.
                       </p>
                     </div>
                   </div>
@@ -744,8 +742,8 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
                 {/* Section C: Tabel Absen dan Token Siswa (Tanpa Sensor) */}
                 <div className="p-6 pt-0 space-y-4 bg-white">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-200">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                      3. TABEL DAFTAR NOMOR ABSEN & KODE TOKEN RESMI (LENGKAP TANPA SENSOR)
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      DAFTAR NOMOR ABSEN DAN KODE TOKEN PEMILIHAN
                     </h4>
 
                     <div className="relative">

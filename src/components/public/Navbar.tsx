@@ -20,14 +20,14 @@ export default function Navbar({ status = 'ongoing' }: NavbarProps) {
         return (
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Voting Aktif</span>
+            <span>Pemungutan Suara Aktif</span>
           </div>
         );
       case 'closed':
         return (
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold">
             <span className="w-2 h-2 rounded-full bg-slate-400" />
-            <span>Voting Ditutup</span>
+            <span>Pemungutan Suara Ditutup</span>
           </div>
         );
       case 'not_started':
