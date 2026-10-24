@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
         id: t.id,
         token_hash: t.token_hash,
         token_preview: t.token_preview,
+        plain_token: t.plain_token,
         class_id: t.class_id,
         batch_id: t.batch_id,
       }));
@@ -161,6 +162,7 @@ export async function PATCH(req: NextRequest) {
             id: result.replacementRecord.id,
             token_hash: result.replacementRecord.token_hash,
             token_preview: result.replacementRecord.token_preview,
+            plain_token: result.replacementRecord.plain_token,
             class_id: result.replacementRecord.class_id,
             batch_id: result.replacementRecord.batch_id,
           }

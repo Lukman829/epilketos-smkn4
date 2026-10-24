@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { exportClassTokensToExcel } from '@/lib/excelExport';
 import { ClassRecord } from '@/types/election';
 
 interface TokenItem {
@@ -161,25 +162,20 @@ export default function AdminTokensPage() {
   };
 
   const handleExportExcel = () => {
-    if (tokens.length === 0) {
+    if (filteredTokens.length === 0) {
       alert('Tidak ada token untuk diekspor.');
       return;
     }
 
-    const exportRows = tokens.map((t, idx) => ({
-      No: idx + 1,
-      'Kode Token': t.plain,
-      'Kelas': t.class_name,
-      'Status': t.status.toUpperCase(),
-      'Tanggal Terbit': new Date(t.created_at).toLocaleDateString('id-ID'),
-      'Waktu Terpakai': t.used_at ? new Date(t.used_at).toLocaleString('id-ID') : '-',
-      'Alasan Dibatalkan': t.revoked_reason || '-',
-    }));
+    const currentClassName =
+      selectedClass === 'all'
+        ? 'Semua_Kelas'
+        : classes.find((c) => c.id === selectedClass)?.name || selectedClass;
 
-    const ws = XLSX.utils.json_to_sheet(exportRows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Daftar Token Pemilihan');
-    XLSX.writeFile(wb, `Token_PILKETOS_SMKN4_${selectedClass}_${Date.now()}.xlsx`);
+    exportClassTokensToExcel({
+      className: currentClassName,
+      tokens: filteredTokens,
+    });
   };
 
   const filteredTokens = tokens.filter((t) => {

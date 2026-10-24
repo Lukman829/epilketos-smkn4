@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   ExternalLink,
+  Megaphone,
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -66,6 +67,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Kelola Kandidat', href: '/admin/candidates', icon: Users },
     { label: 'Kelola Kelas & Kuota', href: '/admin/classes', icon: School },
     { label: 'Manajemen Token', href: '/admin/tokens', icon: KeyRound },
+    { label: 'Pengumuman & Distribusi', href: '/admin/announcements', icon: Megaphone },
     { label: 'Kontrol Pemilihan', href: '/admin/control', icon: Sliders },
     { label: 'Log Audit Keamanan', href: '/admin/audit', icon: FileText },
   ];

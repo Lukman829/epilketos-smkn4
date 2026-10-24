@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'feat: integrate Supabase PostgreSQL for persistent voting, tokens, and results';
+  const commitMsg = 'feat: add class announcement and token distribution submenu with uncensored neat excel export';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,
