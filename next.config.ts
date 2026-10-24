@@ -53,6 +53,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/logo-smkn4.png',
+        destination: '/api/logo',
+      },
+      {
+        source: '/logo-smkn4.jpg',
+        destination: '/api/logo',
+      },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {
