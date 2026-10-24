@@ -43,7 +43,7 @@ assert(
 // TEST 2: Valid token check
 const validationResult = validateTokenStatus('PLK-DEMO-2026');
 assert(validationResult.valid === true, 'Token PLK-DEMO-2026 is recognized as valid');
-assert(validationResult.className === 'X PPLG 1', 'Token belongs to class X PPLG 1');
+assert(validationResult.className === 'X TKJ 1', 'Token belongs to class X TKJ 1');
 
 // TEST 3: Invalid token check
 const invalidResult = validateTokenStatus('PLK-FAKE-9999');
@@ -72,7 +72,7 @@ assert(
 );
 
 // TEST 8: Token Batch Generation & Class Quota
-const batchResult = adminGenerateBatchTokens('cls-10-tjkt-1', 5, 'Ketua Panitia');
+const batchResult = adminGenerateBatchTokens('cls-10-tkj-1', 5, 'Ketua Panitia');
 assert(batchResult.generatedTokens.length === 5, 'Batch generation creates exactly 5 tokens');
 const testBatchToken = batchResult.generatedTokens[0].token;
 const batchVal = validateTokenStatus(testBatchToken);

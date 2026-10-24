@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'fix(security): comprehensive security audit remediation (HMAC session tokens, rate limiting, constant-time compare, security headers, input sanitization)';
+  const commitMsg = 'feat: update school structure to 8 official majors (TKJ, TSM, TKRO, TBSM, MPLB, AK, TEI, TITL) and 30 rombel classes';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,

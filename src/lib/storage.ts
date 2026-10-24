@@ -89,7 +89,7 @@ export function initStoreIfNeeded() {
     });
 
     for (let i = 0; i < 5; i++) {
-      const plainToken = i === 0 && cls.id === 'cls-10-pplg-1' 
+      const plainToken = i === 0 && cls.id === 'cls-10-tkj-1' 
         ? 'PLK-DEMO-2026' 
         : generateSecureToken();
       const hash = hashToken(plainToken);

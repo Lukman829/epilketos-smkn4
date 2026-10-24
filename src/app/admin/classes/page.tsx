@@ -41,7 +41,7 @@ export default function AdminClassesPage() {
     setEditingClass({
       id: `cls-${Date.now()}`,
       grade: '10',
-      major: 'PPLG',
+      major: 'TKJ',
       name: '',
       voter_quota: 36,
       tokens_generated: 0,
@@ -289,7 +289,7 @@ export default function AdminClassesPage() {
                   type="text"
                   value={editingClass.name}
                   onChange={(e) => setEditingClass({ ...editingClass, name: e.target.value })}
-                  placeholder="Contoh: X PPLG 1"
+                  placeholder="Contoh: X TKJ 1"
                   className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:border-blue-600 font-mono"
                   required
                 />
@@ -316,7 +316,7 @@ export default function AdminClassesPage() {
                     type="text"
                     value={editingClass.major}
                     onChange={(e) => setEditingClass({ ...editingClass, major: e.target.value })}
-                    placeholder="PPLG, TJKT, DKV"
+                    placeholder="TKJ, TSM, TKRO, TBSM, MPLB, AK, TEI, TITL"
                     className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:border-blue-600"
                     required
                   />
