@@ -8,7 +8,6 @@ import {
   Copy,
   Check,
   Send,
-  Sparkles,
   Calendar,
   Clock,
   MapPin,
@@ -17,7 +16,7 @@ import {
   FileText,
   KeyRound,
   Search,
-  ExternalLink,
+  CheckCircle2,
 } from 'lucide-react';
 import { ClassRecord } from '@/types/election';
 import { exportClassTokensToExcel, TokenExportItem } from '@/lib/excelExport';
@@ -29,7 +28,7 @@ export default function AdminAnnouncementsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Form states
+  // Form states (Require Nama Kelas & Jumlah Siswa)
   const [voterCount, setVoterCount] = useState<number>(36);
   const [homeroomTeacher, setHomeroomTeacher] = useState<string>('');
   const [electionDate, setElectionDate] = useState<string>('Senin, 26 Oktober 2026');
@@ -38,12 +37,12 @@ export default function AdminAnnouncementsPage() {
     'Bilik Suara Digital (Lab Komputer / Smartphone Masing-Masing)'
   );
   const [specialNotes, setSpecialNotes] = useState<string>(
-    '1. Setiap token hanya dapat digunakan untuk 1 (satu) kali pemberian suara sah.\n2. Token bersifat pribadi dan rahasia, dilarang membagikan kode token kepada orang lain.\n3. Pemilihan dapat diakses dari smartphone, tablet, atau komputer yang terhubung ke internet.'
+    '1. Setiap token hanya dapat digunakan untuk 1 (satu) kali pemberian suara sah.\n2. Token bersifat pribadi dan rahasia, dilarang membagikan kode token kepada orang lain.\n3. Pemilihan dapat diakses melalui smartphone atau komputer yang terhubung ke internet.'
   );
 
-  // Tab state: 'letter' | 'whatsapp' | 'tokens'
-  const [activeTab, setActiveTab] = useState<'letter' | 'whatsapp' | 'tokens'>('letter');
-  const [copiedWA, setCopiedWA] = useState(false);
+  // Tab state: 'excel' | 'letter' | 'broadcast'
+  const [activeTab, setActiveTab] = useState<'excel' | 'letter' | 'broadcast'>('excel');
+  const [copiedBroadcast, setCopiedBroadcast] = useState(false);
   const [copiedTokenId, setCopiedTokenId] = useState<string | null>(null);
   const [tokenSearch, setTokenSearch] = useState('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -109,9 +108,23 @@ export default function AdminAnnouncementsPage() {
     fetchTokens();
   }, [selectedClassId, classes]);
 
-  // Generate Batch Tokens for selected class
-  const handleGenerateBatch = async () => {
-    if (!currentClass) return;
+  // Handle Generate Batch Tokens
+  const handleGenerateBatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedClassId) {
+      setNotification({ type: 'error', text: 'Nama kelas wajib dipilih.' });
+      return;
+    }
+
+    if (!voterCount || voterCount < 1 || voterCount > 100) {
+      setNotification({
+        type: 'error',
+        text: 'Jumlah siswa wajib diisi antara 1 hingga 100 siswa.',
+      });
+      return;
+    }
+
     setIsGenerating(true);
     setNotification(null);
 
@@ -127,7 +140,7 @@ export default function AdminAnnouncementsPage() {
           'x-admin-name': user.name || 'Admin Panitia',
         },
         body: JSON.stringify({
-          class_id: currentClass.id,
+          class_id: selectedClassId,
           count: voterCount,
         }),
       });
@@ -136,16 +149,17 @@ export default function AdminAnnouncementsPage() {
       if (data.success) {
         setNotification({
           type: 'success',
-          text: `Berhasil menerbitkan ${data.count} token baru untuk ${currentClass.name}!`,
+          text: `Berhasil menerbitkan ${data.count} token pemilihan untuk ${currentClass?.name}. Berkas pengumuman dan ekspor Excel telah aktif.`,
         });
 
         // Refetch tokens
-        const tokRes = await fetch(`/api/admin/tokens?class_id=${currentClass.id}&status=all`, {
+        const tokRes = await fetch(`/api/admin/tokens?class_id=${selectedClassId}&status=all`, {
           headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
         });
         const tokData = await tokRes.json();
         if (tokData.success) {
           setTokens(tokData.tokens);
+          setActiveTab('excel');
         }
       } else {
         setNotification({
@@ -163,10 +177,12 @@ export default function AdminAnnouncementsPage() {
     }
   };
 
-  // WhatsApp Broadcast Template Text
-  const waBroadcastText = useMemo(() => {
+  // Broadcast Message Template
+  const broadcastText = useMemo(() => {
     const className = currentClass ? currentClass.name : 'Kelas';
-    const teacherSalutation = homeroomTeacher ? `Bapak/Ibu ${homeroomTeacher}` : 'Bapak/Ibu Wali Kelas';
+    const teacherSalutation = homeroomTeacher.trim()
+      ? `Bapak/Ibu ${homeroomTeacher.trim()}`
+      : 'Bapak/Ibu Wali Kelas';
 
     return (
 `PEMBERITAHUAN PELAKSANAAN PEMILIHAN KETUA DAN WAKIL KETUA OSIS
@@ -198,16 +214,16 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
     );
   }, [currentClass, homeroomTeacher, electionDate, electionTime, electionVenue, voteUrl, specialNotes]);
 
-  // Copy WhatsApp Broadcast Text
-  const handleCopyWA = () => {
-    navigator.clipboard.writeText(waBroadcastText);
-    setCopiedWA(true);
-    setTimeout(() => setCopiedWA(false), 2500);
+  // Copy Broadcast Text
+  const handleCopyBroadcast = () => {
+    navigator.clipboard.writeText(broadcastText);
+    setCopiedBroadcast(true);
+    setTimeout(() => setCopiedBroadcast(false), 2500);
   };
 
   // Open Direct WhatsApp Share
-  const handleShareWA = () => {
-    const encoded = encodeURIComponent(waBroadcastText);
+  const handleShareWhatsApp = () => {
+    const encoded = encodeURIComponent(broadcastText);
     window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
   };
 
@@ -245,42 +261,19 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
 
   const activeTokenCount = tokens.filter((t) => t.status === 'active').length;
   const usedTokenCount = tokens.filter((t) => t.status === 'used').length;
+  const hasTokens = tokens.length > 0;
 
   return (
     <div className="space-y-8 print:p-0 print:m-0 print:space-y-0">
       {/* Screen Header (Hidden on Print) */}
-      <div className="print:hidden flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-white border border-slate-200 shadow-sm">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100">
-            <span>Distribusi Token &amp; Pengumuman Resmi</span>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <Megaphone className="w-6 h-6 text-blue-600" />
-            <span>Pengumuman &amp; Distribusi Token Kelas</span>
-          </h1>
-          <p className="text-xs text-slate-500">
-            Penerbitan token per kelas, dokumen resmi pengumuman, teks pemberitahuan, dan rekapitulasi data distribusi.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={handleExportExcel}
-            disabled={tokens.length === 0}
-            className="px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center gap-2 transition-colors border border-emerald-200 disabled:opacity-50"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            <span>Unduh Rekapitulasi Excel</span>
-          </button>
-
-          <button
-            onClick={handlePrintLetter}
-            className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 transition-colors shadow-sm"
-          >
-            <Printer className="w-4 h-4" />
-            <span>Cetak Dokumen Resmi</span>
-          </button>
-        </div>
+      <div className="print:hidden p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-1">
+        <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+          <Megaphone className="w-6 h-6 text-blue-600" />
+          <span>Pengumuman &amp; Distribusi Token Pemilihan</span>
+        </h1>
+        <p className="text-xs text-slate-500">
+          Formulir penerbitan batch token per kelas, pembuatan dokumen resmi, dan pengunduhan berkas Excel distribusi.
+        </p>
       </div>
 
       {/* Notification Banner */}
@@ -294,9 +287,9 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
         >
           <div className="flex items-center gap-2">
             {notification.type === 'success' ? (
-              <Check className="w-5 h-5 text-emerald-600" />
+              <Check className="w-5 h-5 text-emerald-600 flex-shrink-0" />
             ) : (
-              <AlertCircle className="w-5 h-5 text-rose-600" />
+              <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
             )}
             <span>{notification.text}</span>
           </div>
@@ -306,24 +299,44 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
         </div>
       )}
 
-      {/* Main Grid: Form Left, Announcement Preview Right (Hidden on Print) */}
-      <div className="print:hidden grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Form Settings & Batch Generator (4 Cols) */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5">
-            <h2 className="text-base font-black text-slate-900 flex items-center gap-2 pb-3 border-b border-slate-100">
-              <Calendar className="w-4 h-4 text-blue-600" />
-              <span>Formulir Pengumuman Kelas</span>
-            </h2>
+      {/* SECTION 1: FORMULIR PENERBITAN BATCH TOKEN KELAS (UPFRONT & PROMINENT) */}
+      <div className="print:hidden p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
+        <div className="border-b border-slate-100 pb-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="space-y-1">
+              <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <KeyRound className="w-5 h-5 text-blue-600" />
+                <span>Formulir Penerbitan Batch Token Kelas</span>
+              </h2>
+              <p className="text-xs text-slate-500">
+                Lengkapi kolom wajib di bawah ini. Token pemilihan akan diterbitkan dan berkas Excel pengumuman otomatis siap diunduh.
+              </p>
+            </div>
 
-            {/* Class Selector */}
+            {hasTokens && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{tokens.length} Token Telah Diterbitkan</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <form onSubmit={handleGenerateBatch} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Required Field 1: Nama Kelas */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Pilih Kelas Sasaran (8 Jurusan SMKN 4)</label>
+              <label className="text-xs font-black text-slate-900 flex items-center justify-between">
+                <span>Nama Kelas <span className="text-rose-600 font-bold">* (Wajib)</span></span>
+                <span className="text-[11px] font-normal text-slate-400">Pilih dari 30 Rombel</span>
+              </label>
               <select
+                required
                 value={selectedClassId}
                 onChange={(e) => setSelectedClassId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
               >
+                <option value="">-- Pilih Nama Kelas --</option>
                 {classes.map((cls) => (
                   <option key={cls.id} value={cls.id}>
                     {cls.name} ({cls.voter_quota} Siswa)
@@ -332,63 +345,65 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
               </select>
             </div>
 
-            {/* Voter Quota */}
+            {/* Required Field 2: Jumlah Siswa */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Jumlah Siswa / Kuota DPT</label>
+              <label className="text-xs font-black text-slate-900 flex items-center justify-between">
+                <span>Jumlah Siswa (DPT) <span className="text-rose-600 font-bold">* (Wajib)</span></span>
+                <span className="text-[11px] font-normal text-slate-400">Standar 36 Siswa</span>
+              </label>
               <input
                 type="number"
+                required
                 min={1}
                 max={100}
                 value={voterCount}
-                onChange={(e) => setVoterCount(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                onChange={(e) => setVoterCount(parseInt(e.target.value) || 0)}
+                placeholder="Masukkan jumlah siswa..."
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
               />
-              <p className="text-[11px] text-slate-400">
-                Standar rombel SMKN 4 Kota Serang berisi 36 siswa per kelas.
-              </p>
             </div>
 
-            {/* Homeroom Teacher */}
+            {/* Supporting Field: Wali Kelas */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Wali Kelas / Narahubung (Opsional)</label>
+              <label className="text-xs font-bold text-slate-700">Wali Kelas / Guru Pendamping (Opsional)</label>
               <input
                 type="text"
                 placeholder="Contoh: Bpk. Rahmat Santoso, S.Pd."
                 value={homeroomTeacher}
                 onChange={(e) => setHomeroomTeacher(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
             </div>
 
-            {/* Election Date */}
+            {/* Supporting Field: Hari & Tanggal */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Hari & Tanggal Pemilihan</label>
+              <label className="text-xs font-bold text-slate-700">Hari, Tanggal Pemilihan</label>
               <div className="relative">
                 <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
                   type="text"
                   value={electionDate}
                   onChange={(e) => setElectionDate(e.target.value)}
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
             </div>
 
-            {/* Election Time */}
+            {/* Supporting Field: Waktu Pelaksanaan */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Waktu Pencoblosan</label>
+              <label className="text-xs font-bold text-slate-700">Waktu Pelaksanaan</label>
               <div className="relative">
                 <Clock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
                   type="text"
                   value={electionTime}
                   onChange={(e) => setElectionTime(e.target.value)}
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
             </div>
 
-            {/* Election Venue */}
+            {/* Supporting Field: Lokasi / Akses */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700">Lokasi / Akses Pemilihan</label>
               <div className="relative">
@@ -397,289 +412,130 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
                   type="text"
                   value={electionVenue}
                   onChange={(e) => setElectionVenue(e.target.value)}
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
             </div>
+          </div>
 
-            {/* Special Notes */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Catatan & Instruksi Khusus Panitia</label>
-              <textarea
-                rows={3}
-                value={specialNotes}
-                onChange={(e) => setSpecialNotes(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 leading-relaxed"
-              />
-            </div>
+          {/* Action Row */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100">
+            <p className="text-xs text-slate-500">
+              {hasTokens
+                ? `${tokens.length} token aktif siap diekspor dalam template dokumen resmi.`
+                : 'Setelah formulir diisi dan diserahkan, token akan otomatis dihasilkan.'}
+            </p>
 
-            {/* Token Batch Generation Action */}
-            <div className="pt-3 border-t border-slate-100 space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">Status Token Kelas Ini:</span>
-                <span
-                  className={`font-black px-2.5 py-0.5 rounded-full text-[11px] ${
-                    tokens.length > 0
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+            <button
+              type="submit"
+              disabled={isGenerating || !selectedClassId || !voterCount}
+              className="w-full sm:w-auto px-7 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/10 disabled:opacity-50"
+            >
+              <KeyRound className="w-4 h-4" />
+              <span>
+                {isGenerating
+                  ? 'Sedang Menerbitkan...'
+                  : hasTokens
+                  ? `Terbitkan Tambahan (${voterCount} Token Baru)`
+                  : `Terbitkan Token (${voterCount} Token Siswa)`}
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* SECTION 2: TEMPLATE PENGUMUMAN & EKSPOR EXCEL (AKTIF SETELAH TOKEN TERSEDIA) */}
+      <div className="print:hidden space-y-4">
+        {!hasTokens ? (
+          /* Empty State: Prompting to fill form */
+          <div className="p-12 text-center rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+            <KeyRound className="w-12 h-12 text-slate-300 mx-auto" />
+            <h3 className="text-base font-black text-slate-800">
+              Token Belum Diterbitkan untuk Kelas Ini
+            </h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+              Silakan lengkapi <strong>Nama Kelas</strong> dan <strong>Jumlah Siswa</strong> pada formulir di atas, kemudian tekan tombol <strong>&ldquo;Terbitkan Token&rdquo;</strong>. Setelah itu, berkas pengumuman resmi dan tautan unduh Excel distribusi kelas akan otomatis aktif di bagian ini.
+            </p>
+          </div>
+        ) : (
+          /* Active State: Ready for Export & Document Previews */
+          <div className="space-y-4">
+            {/* Top Action Bar with Prominent Excel Export */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl bg-white border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-100 border border-slate-200 w-fit">
+                <button
+                  onClick={() => setActiveTab('excel')}
+                  className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all ${
+                    activeTab === 'excel'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {tokens.length > 0 ? `${tokens.length} Token Diterbitkan` : 'Belum Ada Token'}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleGenerateBatch}
-                disabled={isGenerating}
-                className="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/10 disabled:opacity-50"
-              >
-                <span>
-                  {isGenerating
-                    ? 'Sedang Memproses...'
-                    : tokens.length > 0
-                    ? `Terbitkan Tambahan (${voterCount} Token)`
-                    : `Terbitkan Token (${voterCount} Token - ${currentClass?.name || ''})`}
-                </span>
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Metrics Card */}
-          <div className="p-5 rounded-3xl bg-slate-50 border border-slate-200 space-y-3">
-            <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">
-              Statistik Distribusi {currentClass?.name}
-            </h3>
-            <div className="grid grid-cols-2 gap-3 text-center">
-              <div className="p-3 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-                <p className="text-xl font-black text-blue-600">{activeTokenCount}</p>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Belum Digunakan</p>
-              </div>
-              <div className="p-3 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-                <p className="text-xl font-black text-emerald-600">{usedTokenCount}</p>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sudah Digunakan</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Announcement Preview & Token List (8 Cols) */}
-        <div className="lg:col-span-8 space-y-4">
-          {/* Tabs Selector */}
-          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-100 border border-slate-200 w-fit">
-            <button
-              onClick={() => setActiveTab('letter')}
-              className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all ${
-                activeTab === 'letter'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <FileText className="w-4 h-4 text-blue-600" />
-              <span>Surat Resmi (A4)</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('whatsapp')}
-              className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all ${
-                activeTab === 'whatsapp'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Send className="w-4 h-4 text-emerald-600" />
-              <span>Format WhatsApp</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('tokens')}
-              className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all ${
-                activeTab === 'tokens'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-              <span>Format Excel & Token Kelas ({tokens.length})</span>
-            </button>
-          </div>
-
-          {/* TAB 1: Official Letterhead Preview (A4) */}
-          {activeTab === 'letter' && (
-            <div className="p-8 sm:p-12 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6 text-slate-900">
-              {/* Kop Surat SMKN 4 Kota Serang */}
-              <div className="text-center space-y-1 pb-4 border-b-4 border-double border-slate-900">
-                <p className="text-xs font-black uppercase tracking-wider text-slate-600">
-                  PEMERINTAH DAERAH PROVINSI BANTEN
-                </p>
-                <p className="text-sm font-black uppercase tracking-wider text-slate-700">
-                  DINAS PENDIDIKAN DAN KEBUDAYAAN
-                </p>
-                <h2 className="text-xl font-black uppercase tracking-tight text-slate-900">
-                  SMK NEGERI 4 KOTA SERANG
-                </h2>
-                <p className="text-[11px] font-medium text-slate-500">
-                  Jl. Raya Taktakan KM 03, Panggungjati, Kec. Taktakan, Kota Serang, Banten 42162
-                </p>
-                <p className="text-[11px] font-bold text-blue-700">
-                  KOMISI PEMILIHAN KETUA & WAKIL KETUA OSIS — MASA BAKTI 2026/2027
-                </p>
-              </div>
-
-              {/* Letter Meta */}
-              <div className="flex flex-col sm:flex-row justify-between text-xs text-slate-700 gap-2">
-                <div>
-                  <p><span className="font-bold">Nomor:</span> 04/PAN-PILKETOS/SMKN4/X/2026</p>
-                  <p><span className="font-bold">Lampiran:</span> 1 (satu) Berkas Lembar Token Siswa</p>
-                  <p><span className="font-bold">Perihal:</span> Pemberitahuan & Distribusi Token Bilik Suara Digital</p>
-                </div>
-                <div className="sm:text-right">
-                  <p>Kota Serang, {electionDate.split(',')[1]?.trim() || '26 Oktober 2026'}</p>
-                  <p className="font-bold text-slate-900">Kepada Yth.</p>
-                  <p>Bapak/Ibu Wali Kelas & Seluruh Siswa/i</p>
-                  <p className="font-black text-blue-600">{currentClass?.name || 'Kelas'}</p>
-                </div>
-              </div>
-
-              {/* Letter Body */}
-              <div className="text-xs leading-relaxed space-y-4 text-justify text-slate-700">
-                <p>
-                  Dengan hormat, sehubungan dengan pelaksanaan agenda tahunan demokrasi sekolah Pemilihan Ketua dan
-                  Wakil Ketua OSIS SMK Negeri 4 Kota Serang Masa Bakti 2026/2027 yang diselenggarakan secara daring
-                  melalui platform <strong>E-PILKETOS SMKN 4</strong>, kami panitia pelaksana menyampaikan informasi
-                  pelaksanaan sebagai berikut:
-                </p>
-
-                {/* Details Table */}
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 font-mono text-xs">
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="font-bold text-slate-600">Hari, Tanggal</span>
-                    <span className="col-span-2 text-slate-900">: {electionDate}</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="font-bold text-slate-600">Waktu Pelaksanaan</span>
-                    <span className="col-span-2 text-slate-900">: {electionTime}</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="font-bold text-slate-600">Alokasi DPT Kelas</span>
-                    <span className="col-span-2 text-slate-900">: {tokens.length || voterCount} Pemilih Terdaftar</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="font-bold text-slate-600">Tautan Bilik Suara</span>
-                    <span className="col-span-2 text-blue-700 font-bold underline break-all">
-                      : {voteUrl}
-                    </span>
-                  </div>
-                </div>
-
-                <p className="font-bold text-slate-900">Tata Cara Pemberian Hak Suara Digital:</p>
-                <ol className="list-decimal pl-5 space-y-1 text-slate-600">
-                  <li>Buka tautan bilik suara resmi pada peramban web: <strong className="text-blue-700">{voteUrl}</strong>.</li>
-                  <li>Masukkan <strong>Kode Token Kriptografis Unik</strong> yang tertera pada lembar distribusi masing-masing siswa.</li>
-                  <li>Tentukan pilihan 1 (satu) Calon Ketua OSIS dan 1 (satu) Calon Wakil Ketua OSIS berdasarkan visi, misi, dan program kerja.</li>
-                  <li>Konfirmasi pilihan Anda pada layar verifikasi dan tekan tombol <strong>Kirim Suara</strong>.</li>
-                </ol>
-
-                <p className="italic text-[11px] text-slate-500">
-                  *Catatan: Kode token bersifat rahasia dan langsung kedaluwarsa seketika setelah suara sah tercatat.
-                  Surat suara disimpan secara anonim tanpa identitas pemilih demi menjamin kerahasiaan penuh asas LUBERJURDIL.
-                </p>
-              </div>
-
-              {/* Signatures */}
-              <div className="pt-8 grid grid-cols-2 text-center text-xs text-slate-800">
-                <div className="space-y-12">
-                  <p>Mengetahui,<br /><span className="font-bold">Pembina OSIS SMKN 4</span></p>
-                  <p className="font-bold underline">H. Ahmad Fauzi, M.Pd.</p>
-                </div>
-                <div className="space-y-12">
-                  <p>Hormat kami,<br /><span className="font-bold">Ketua Panitia Pelaksana</span></p>
-                  <p className="font-bold underline">Bagas Pratama Putra</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: WhatsApp Broadcast Template */}
-          {activeTab === 'whatsapp' && (
-            <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div>
-                  <h3 className="text-sm font-black text-slate-900">Template Siaran WhatsApp Grup Kelas</h3>
-                  <p className="text-xs text-slate-500">
-                    Format pesan siap dikirim ke grup WhatsApp wali kelas dan siswa
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleCopyWA}
-                    className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-xs"
-                  >
-                    {copiedWA ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                    <span>{copiedWA ? 'Tersalin!' : 'Salin Teks'}</span>
-                  </button>
-
-                  <button
-                    onClick={handleShareWA}
-                    className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-xs"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>Kirim ke WhatsApp</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* WhatsApp Message Preview Box */}
-              <div className="p-4 rounded-2xl bg-[#EFEAE2] border border-slate-300 font-sans text-xs text-slate-800 whitespace-pre-wrap leading-relaxed shadow-inner">
-                {waBroadcastText}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: Excel Distribution & Uncensored Token List */}
-          {activeTab === 'tokens' && (
-            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
-              {/* Header Box & Download Action */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80">
-                <div className="space-y-1">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
-                    <FileSpreadsheet className="w-3.5 h-3.5" />
-                    <span>Distribusi 1 File Excel per Kelas</span>
-                  </div>
-                  <h3 className="text-base font-black text-emerald-950">
-                    File Excel Distribusi: {currentClass?.name}
-                  </h3>
-                  <p className="text-xs text-emerald-800/80">
-                    Format file Excel telah dilengkapi informasi kelas, tata cara vote, dan tabel nomor absen beserta token lengkap tanpa sensor.
-                  </p>
-                </div>
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                  <span>Berkas Excel Distribusi ({tokens.length})</span>
+                </button>
 
                 <button
-                  onClick={handleExportExcel}
-                  disabled={tokens.length === 0}
-                  className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50 flex-shrink-0"
+                  onClick={() => setActiveTab('letter')}
+                  className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all ${
+                    activeTab === 'letter'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  <span>📥 Unduh File Excel {currentClass?.name} (.xlsx)</span>
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  <span>Surat Resmi (A4)</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('broadcast')}
+                  className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all ${
+                    activeTab === 'broadcast'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Send className="w-4 h-4 text-emerald-600" />
+                  <span>Teks Pemberitahuan</span>
                 </button>
               </div>
 
-              {/* LIVE EXCEL PREVIEW BOX (Sebelum Tabel: Nama Kelas, Jadwal & Tata Cara Vote) */}
-              <div className="rounded-2xl border-2 border-emerald-300/80 bg-white overflow-hidden shadow-xs">
-                {/* Excel Tab Bar Simulation */}
-                <div className="px-4 py-2 bg-emerald-700 text-white text-[11px] font-bold flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleExportExcel}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-emerald-600/20"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>Unduh Dokumen Excel {currentClass?.name} (.xlsx)</span>
+                </button>
+
+                <button
+                  onClick={handlePrintLetter}
+                  className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 transition-colors shadow-sm"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Cetak Dokumen Resmi</span>
+                </button>
+              </div>
+            </div>
+
+            {/* TAB CONTENT: EXCEL DISTRIBUTION PREVIEW */}
+            {activeTab === 'excel' && (
+              <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                <div className="px-5 py-3 bg-emerald-700 text-white text-xs font-bold flex items-center justify-between">
                   <span className="flex items-center gap-2">
                     <FileSpreadsheet className="w-4 h-4" />
-                    <span>Lembar Kerja: Token_{currentClass?.name.replace(/[^a-zA-Z0-9_-]/g, '_')}</span>
+                    <span>Lembar Kerja Distribusi: Token_{currentClass?.name.replace(/[^a-zA-Z0-9_-]/g, '_')}</span>
                   </span>
-                  <span className="text-emerald-200 text-[10px] font-mono">Pratinjau Struktur File Excel</span>
+                  <span className="text-emerald-200 text-[11px] font-mono">
+                    Format Resmi 1 Berkas per Kelas
+                  </span>
                 </div>
 
-                <div className="p-6 space-y-5 bg-gradient-to-b from-emerald-50/30 to-white">
+                <div className="p-6 sm:p-8 space-y-6">
                   {/* Top Titles in Excel */}
-                  <div className="text-center space-y-0.5 pb-3 border-b border-emerald-200/60">
-                    <p className="text-sm font-black text-slate-900 tracking-tight">
+                  <div className="text-center space-y-1 pb-4 border-b border-slate-200">
+                    <p className="text-sm font-black text-slate-900 uppercase tracking-tight">
                       PEMILIHAN KETUA DAN WAKIL KETUA OSIS — SMK NEGERI 4 KOTA SERANG
                     </p>
                     <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
@@ -688,33 +544,33 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
                   </div>
 
                   {/* Section A: Informasi Kelas & Pelaksanaan (Sebelum Tabel) */}
-                  <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3 text-xs">
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 text-xs">
                     <p className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-blue-700 flex items-center gap-1.5">
                       <UserCheck className="w-4 h-4" />
                       <span>INFORMASI KELAS DAN JADWAL PELAKSANAAN</span>
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 font-mono text-[11px]">
-                      <div className="flex justify-between border-b border-slate-100 pb-1">
+                      <div className="flex justify-between border-b border-slate-200/60 pb-1">
                         <span className="text-slate-500 font-sans">Nama Kelas:</span>
                         <span className="font-bold text-slate-900">{currentClass?.name}</span>
                       </div>
-                      <div className="flex justify-between border-b border-slate-100 pb-1">
+                      <div className="flex justify-between border-b border-slate-200/60 pb-1">
                         <span className="text-slate-500 font-sans">Wali Kelas / Pendamping:</span>
                         <span className="font-bold text-slate-900">{homeroomTeacher || '...........................................'}</span>
                       </div>
-                      <div className="flex justify-between border-b border-slate-100 pb-1">
+                      <div className="flex justify-between border-b border-slate-200/60 pb-1">
                         <span className="text-slate-500 font-sans">Alokasi DPT:</span>
-                        <span className="font-bold text-slate-900">{tokens.length || voterCount} Siswa</span>
+                        <span className="font-bold text-slate-900">{tokens.length} Siswa</span>
                       </div>
-                      <div className="flex justify-between border-b border-slate-100 pb-1">
+                      <div className="flex justify-between border-b border-slate-200/60 pb-1">
                         <span className="text-slate-500 font-sans">Hari, Tanggal Pemilihan:</span>
                         <span className="font-bold text-slate-900">{electionDate}</span>
                       </div>
-                      <div className="flex justify-between border-b border-slate-100 pb-1">
+                      <div className="flex justify-between border-b border-slate-200/60 pb-1">
                         <span className="text-slate-500 font-sans">Tautan Bilik Suara:</span>
                         <span className="font-bold text-blue-700 underline">{voteUrl}</span>
                       </div>
-                      <div className="flex justify-between border-b border-slate-100 pb-1">
+                      <div className="flex justify-between border-b border-slate-200/60 pb-1">
                         <span className="text-slate-500 font-sans">Waktu Pelaksanaan:</span>
                         <span className="font-bold text-slate-900">{electionTime}</span>
                       </div>
@@ -722,7 +578,7 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
                   </div>
 
                   {/* Section B: Panduan & Tata Cara Vote (Sebelum Tabel) */}
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
                     <p className="font-bold text-slate-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                       <AlertCircle className="w-4 h-4 text-slate-700" />
                       <span>PANDUAN DAN TATA CARA PEMILIHAN (HAK SUARA SISWA)</span>
@@ -737,43 +593,33 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
                       </p>
                     </div>
                   </div>
-                </div>
 
-                {/* Section C: Tabel Absen dan Token Siswa (Tanpa Sensor) */}
-                <div className="p-6 pt-0 space-y-4 bg-white">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-200">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                      DAFTAR NOMOR ABSEN DAN KODE TOKEN PEMILIHAN
-                    </h4>
+                  {/* Section C: Tabel Absen dan Token Siswa (Tanpa Sensor) */}
+                  <div className="space-y-4 pt-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                        DAFTAR NOMOR ABSEN DAN KODE TOKEN PEMILIHAN
+                      </h4>
 
-                    <div className="relative">
-                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-                      <input
-                        type="text"
-                        placeholder="Cari kode token atau absen..."
-                        value={tokenSearch}
-                        onChange={(e) => setTokenSearch(e.target.value)}
-                        className="pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                      />
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                        <input
+                          type="text"
+                          placeholder="Cari kode token atau absen..."
+                          value={tokenSearch}
+                          onChange={(e) => setTokenSearch(e.target.value)}
+                          className="pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  {tokens.length === 0 ? (
-                    <div className="p-12 text-center space-y-3 rounded-2xl bg-slate-50 border border-slate-200/60">
-                      <KeyRound className="w-10 h-10 text-slate-300 mx-auto" />
-                      <p className="text-sm font-bold text-slate-700">Belum Ada Token untuk Kelas Ini</p>
-                      <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                        Gunakan formulir di sebelah kiri untuk menerbitkan batch token untuk {currentClass?.name}.
-                      </p>
-                    </div>
-                  ) : (
                     <div className="overflow-x-auto border border-slate-200 rounded-xl">
                       <table className="w-full text-left text-xs font-sans">
                         <thead className="bg-slate-100 border-b border-slate-200 text-slate-700 font-black uppercase text-[10px] tracking-wider">
                           <tr>
                             <th className="py-2.5 px-3 w-12 text-center">No</th>
                             <th className="py-2.5 px-3 w-28">No. Absen</th>
-                            <th className="py-2.5 px-3">Kode Token Resmi (Lengkap)</th>
+                            <th className="py-2.5 px-3">Kode Token Pemilihan (Lengkap)</th>
                             <th className="py-2.5 px-3">Tautan Bilik Suara</th>
                             <th className="py-2.5 px-3 w-16 text-right">Salin</th>
                           </tr>
@@ -820,12 +666,139 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
                         </tbody>
                       </table>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+
+            {/* TAB CONTENT: OFFICIAL LETTER A4 */}
+            {activeTab === 'letter' && (
+              <div className="p-8 sm:p-12 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6 text-slate-900">
+                {/* Kop Surat SMKN 4 Kota Serang */}
+                <div className="text-center space-y-1 pb-4 border-b-4 border-double border-slate-900">
+                  <p className="text-xs font-black uppercase tracking-wider text-slate-600">
+                    PEMERINTAH DAERAH PROVINSI BANTEN
+                  </p>
+                  <p className="text-sm font-black uppercase tracking-wider text-slate-700">
+                    DINAS PENDIDIKAN DAN KEBUDAYAAN
+                  </p>
+                  <h2 className="text-xl font-black uppercase tracking-tight text-slate-900">
+                    SMK NEGERI 4 KOTA SERANG
+                  </h2>
+                  <p className="text-[11px] font-medium text-slate-500">
+                    Jl. Raya Taktakan KM 03, Panggungjati, Kec. Taktakan, Kota Serang, Banten 42162
+                  </p>
+                  <p className="text-[11px] font-bold text-blue-700">
+                    KOMISI PEMILIHAN KETUA &amp; WAKIL KETUA OSIS — MASA BAKTI 2026/2027
+                  </p>
+                </div>
+
+                {/* Letter Meta */}
+                <div className="flex flex-col sm:flex-row justify-between text-xs text-slate-700 gap-2">
+                  <div>
+                    <p><span className="font-bold">Nomor:</span> 04/PAN-PILKETOS/SMKN4/X/2026</p>
+                    <p><span className="font-bold">Lampiran:</span> 1 (satu) Berkas Lembar Token Siswa</p>
+                    <p><span className="font-bold">Perihal:</span> Pemberitahuan &amp; Distribusi Token Bilik Suara Digital</p>
+                  </div>
+                  <div className="sm:text-right">
+                    <p>Kota Serang, {electionDate.split(',')[1]?.trim() || '26 Oktober 2026'}</p>
+                    <p className="font-bold text-slate-900">Kepada Yth.</p>
+                    <p>Bapak/Ibu Wali Kelas &amp; Seluruh Siswa/i</p>
+                    <p className="font-black text-blue-600">{currentClass?.name || 'Kelas'}</p>
+                  </div>
+                </div>
+
+                {/* Letter Body */}
+                <div className="text-xs leading-relaxed space-y-4 text-justify text-slate-700">
+                  <p>
+                    Dengan hormat, sehubungan dengan pelaksanaan Pemilihan Ketua dan Wakil Ketua OSIS SMK Negeri 4 Kota Serang Masa Bakti 2026/2027 secara daring melalui platform E-PILKETOS SMKN 4, kami panitia pelaksana menyampaikan informasi pelaksanaan sebagai berikut:
+                  </p>
+
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 font-mono text-xs">
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="font-bold text-slate-600">Hari, Tanggal</span>
+                      <span className="col-span-2 text-slate-900">: {electionDate}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="font-bold text-slate-600">Waktu Pelaksanaan</span>
+                      <span className="col-span-2 text-slate-900">: {electionTime}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="font-bold text-slate-600">Alokasi DPT Kelas</span>
+                      <span className="col-span-2 text-slate-900">: {tokens.length} Pemilih Terdaftar</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="font-bold text-slate-600">Tautan Bilik Suara</span>
+                      <span className="col-span-2 text-blue-700 font-bold underline break-all">
+                        : {voteUrl}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="font-bold text-slate-900">Tata Cara Pemberian Hak Suara Digital:</p>
+                  <ol className="list-decimal pl-5 space-y-1 text-slate-600">
+                    <li>Buka tautan bilik suara resmi pada peramban web: <strong className="text-blue-700">{voteUrl}</strong>.</li>
+                    <li>Masukkan <strong>Kode Token Pemilihan Resmi</strong> yang tertera pada lembar distribusi masing-masing siswa.</li>
+                    <li>Tentukan pilihan 1 (satu) Calon Ketua OSIS dan 1 (satu) Calon Wakil Ketua OSIS berdasarkan pertimbangan pribadi.</li>
+                    <li>Konfirmasi pilihan Anda pada layar verifikasi dan tekan tombol <strong>Kirim Suara Sah</strong>.</li>
+                  </ol>
+
+                  <p className="italic text-[11px] text-slate-500">
+                    *Catatan: Kode token bersifat rahasia dan langsung kedaluwarsa setelah suara sah tercatat. Surat suara disimpan secara anonim tanpa identitas pemilih demi menjamin kerahasiaan penuh asas LUBERJURDIL.
+                  </p>
+                </div>
+
+                {/* Signatures */}
+                <div className="pt-8 grid grid-cols-2 text-center text-xs text-slate-800">
+                  <div className="space-y-12">
+                    <p>Mengetahui,<br /><span className="font-bold">Pembina OSIS SMKN 4</span></p>
+                    <p className="font-bold underline">H. Ahmad Fauzi, M.Pd.</p>
+                  </div>
+                  <div className="space-y-12">
+                    <p>Hormat kami,<br /><span className="font-bold">Ketua Panitia Pelaksana</span></p>
+                    <p className="font-bold underline">Bagas Pratama Putra</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT: BROADCAST TEXT */}
+            {activeTab === 'broadcast' && (
+              <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900">Format Teks Siaran Pemberitahuan</h3>
+                    <p className="text-xs text-slate-500">
+                      Teks resmi untuk dibagikan ke grup wali kelas dan peserta didik
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCopyBroadcast}
+                      className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-xs"
+                    >
+                      {copiedBroadcast ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                      <span>{copiedBroadcast ? 'Tersalin' : 'Salin Teks'}</span>
+                    </button>
+
+                    <button
+                      onClick={handleShareWhatsApp}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-xs"
+                    >
+                      <Send className="w-4 h-4" />
+                      <span>Kirim ke WhatsApp</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 font-mono text-xs text-slate-800 whitespace-pre-wrap leading-relaxed">
+                  {broadcastText}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* PRINT-ONLY VIEW (Hidden on screen, Visible on Print Paper A4) */}
@@ -841,14 +814,14 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
             Jl. Raya Taktakan KM 03 Serang, Banten 42162 | Website: smkn4kotaserang.sch.id
           </p>
           <p className="text-[11px] font-black uppercase tracking-wider">
-            KOMISI PEMILIHAN KETUA & WAKIL KETUA OSIS — MASA BAKTI 2026/2027
+            KOMISI PEMILIHAN KETUA &amp; WAKIL KETUA OSIS — MASA BAKTI 2026/2027
           </p>
         </div>
 
         <div className="flex justify-between text-xs">
           <div>
             <p><strong>Nomor:</strong> 04/PAN-PILKETOS/SMKN4/X/2026</p>
-            <p><strong>Perihal:</strong> Pengumuman Resmi & Daftar Distribusi Token Bilik Suara</p>
+            <p><strong>Perihal:</strong> Pengumuman Resmi &amp; Daftar Distribusi Token Bilik Suara</p>
           </div>
           <div className="text-right">
             <p>Kota Serang, {electionDate.split(',')[1]?.trim() || '26 Oktober 2026'}</p>

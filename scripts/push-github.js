@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'style: refine tone to formal, professional academic standard across web copy and exports';
+  const commitMsg = 'feat: upfront required batch token generation form before unlocking announcement excel export';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,
