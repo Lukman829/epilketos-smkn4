@@ -774,13 +774,10 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
                         <thead className="bg-slate-100 border-b border-slate-200 text-slate-700 font-black uppercase text-[10px] tracking-wider">
                           <tr>
                             <th className="py-2.5 px-3 w-12 text-center">No</th>
-                            <th className="py-2.5 px-3">No. Absen</th>
-                            <th className="py-2.5 px-3">Nama Siswa / DPT</th>
+                            <th className="py-2.5 px-3 w-28">No. Absen</th>
                             <th className="py-2.5 px-3">Kode Token Resmi (Lengkap)</th>
-                            <th className="py-2.5 px-3">Status Hak Suara</th>
-                            <th className="py-2.5 px-3">Waktu Coblos</th>
-                            <th className="py-2.5 px-3 text-center">Paraf / Ceklis</th>
-                            <th className="py-2.5 px-3 text-right">Salin</th>
+                            <th className="py-2.5 px-3">Tautan Bilik Suara</th>
+                            <th className="py-2.5 px-3 w-16 text-right">Salin</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -794,40 +791,13 @@ _Komisi Pemilihan OSIS SMKN 4 Kota Serang_`
                                 <td className="py-2 px-3 font-bold text-slate-900 font-mono text-[11px]">
                                   Absen {String(idx + 1).padStart(2, '0')}
                                 </td>
-                                <td className="py-2 px-3 text-slate-400 font-mono text-[11px]">
-                                  ........................................
-                                </td>
                                 <td className="py-2 px-3">
                                   <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-300 font-mono font-black text-emerald-900 tracking-wider text-[11px]">
                                     {plainToken}
                                   </span>
                                 </td>
-                                <td className="py-2 px-3">
-                                  <span
-                                    className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                      t.status === 'active'
-                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                        : t.status === 'used'
-                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                        : 'bg-rose-50 text-rose-700 border border-rose-200'
-                                    }`}
-                                  >
-                                    {t.status === 'active'
-                                      ? 'Siap Coblos'
-                                      : t.status === 'used'
-                                      ? 'Sudah Memilih'
-                                      : 'Dibatalkan'}
-                                  </span>
-                                </td>
-                                <td className="py-2 px-3 text-[11px] text-slate-500 font-mono">
-                                  {t.used_at ? new Date(t.used_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
-                                </td>
-                                <td className="py-2 px-3 text-center text-[11px] font-mono text-slate-400">
-                                  {t.status === 'used' ? (
-                                    <span className="text-emerald-600 font-bold">[ SUDAH ]</span>
-                                  ) : (
-                                    '[       ]'
-                                  )}
+                                <td className="py-2 px-3 text-[11px] text-blue-700 font-mono underline break-all">
+                                  {voteUrl}
                                 </td>
                                 <td className="py-2 px-3 text-right">
                                   <button

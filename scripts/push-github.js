@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'feat: per-class excel distribution with header metadata, voting instructions, and uncensored attendance table';
+  const commitMsg = 'refactor: simplify excel export and table to No, No Absen, uncensored token, and vote url';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,

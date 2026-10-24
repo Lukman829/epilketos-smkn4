@@ -70,12 +70,8 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
     [
       'No',
       'No. Absen',
-      'Nama Siswa / Pemilih',
       'Kode Token Pemilihan (Lengkap Tanpa Sensor)',
-      'Status Hak Suara',
-      'Waktu Pencoblosan',
-      'Paraf / Ceklis Pemilih',
-      'Keterangan & Petunjuk',
+      'Tautan Bilik Suara',
     ],
   ];
 
@@ -84,26 +80,11 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
     // Pastikan token lengkap tanpa disensor
     const plainToken = (t.plain && !t.plain.includes('*')) ? t.plain : (t.preview || t.id);
 
-    let statusLabel = 'AKTIF / SIAP COBLOS';
-    if (t.status === 'used') statusLabel = 'SUDAH DIGUNAKAN';
-    if (t.status === 'revoked') statusLabel = 'DIBATALKAN';
-
-    const usedTime = t.used_at ? new Date(t.used_at).toLocaleString('id-ID') : '-';
-    const note = t.status === 'used'
-      ? 'Suara telah sah masuk secara anonim'
-      : t.status === 'revoked'
-      ? `Batal: ${t.revoked_reason || 'Dicabut panitia'}`
-      : 'Masukkan di https://epilketos-smkn4.vercel.app/vote';
-
     aoaData.push([
       idx + 1,
       `Absen ${String(idx + 1).padStart(2, '0')}`,
-      '........................................', // Kolom nama siswa untuk diisi wali kelas
       plainToken,
-      statusLabel,
-      usedTime,
-      t.status === 'used' ? '[ SUDAH ]' : '[       ]', // Kolom tanda tangan / paraf ceklis
-      note,
+      voteUrl,
     ]);
   });
 
@@ -111,14 +92,10 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
 
   // Lebar kolom rapi dan proporsional (tidak ada teks terpotong)
   ws['!cols'] = [
-    { wch: 6 },  // No
-    { wch: 14 }, // No. Absen
-    { wch: 32 }, // Nama Siswa / Pemilih
-    { wch: 26 }, // Kode Token Pemilihan (Lengkap Tanpa Sensor)
-    { wch: 22 }, // Status Hak Suara
-    { wch: 22 }, // Waktu Pencoblosan
-    { wch: 18 }, // Paraf / Ceklis Pemilih
-    { wch: 36 }, // Keterangan & Petunjuk
+    { wch: 8 },  // No
+    { wch: 16 }, // No. Absen
+    { wch: 30 }, // Kode Token Pemilihan (Lengkap Tanpa Sensor)
+    { wch: 45 }, // Tautan Bilik Suara
   ];
 
   const wb = XLSX.utils.book_new();
