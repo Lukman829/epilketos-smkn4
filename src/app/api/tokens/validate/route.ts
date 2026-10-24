@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateTokenStatus } from '@/lib/storage';
+import { validateTokenStatus, hashToken } from '@/lib/storage';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { getClientIp, rateLimit, isValidTokenFormat } from '@/lib/security';
 
 export async function POST(req: NextRequest) {
@@ -41,6 +42,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 1. Validate against Supabase PostgreSQL if configured
+    if (isSupabaseConfigured && supabase) {
+      const hashed = hashToken(cleanToken);
+      const { data, error } = await supabase.rpc('validate_token', {
+        p_token_hash: hashed,
+      });
+
+      if (!error && data) {
+        if (!data.valid) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: data.error,
+              status: data.status,
+            },
+            { status: 400 }
+          );
+        }
+
+        return NextResponse.json({
+          success: true,
+          valid: true,
+          className: data.className || 'Siswa SMKN 4',
+          message: 'Token valid. Silakan tentukan pilihan Anda dengan cermat.',
+        });
+      }
+    }
+
+    // 2. Fallback to local storage engine
     const result = validateTokenStatus(cleanToken);
 
     if (!result.valid) {

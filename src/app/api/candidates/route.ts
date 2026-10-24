@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getActiveCandidates } from '@/lib/storage';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { getClientIp, rateLimit } from '@/lib/security';
 
 export async function GET(req: NextRequest) {
@@ -18,6 +19,28 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // 1. Fetch from Supabase PostgreSQL if configured
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('candidates')
+        .select('*')
+        .eq('is_active', true)
+        .order('candidate_number', { ascending: true });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const ketua = data.filter((c) => c.type === 'ketua');
+        const wakil = data.filter((c) => c.type === 'wakil');
+        return NextResponse.json({
+          success: true,
+          ketua,
+          wakil,
+          total_ketua: ketua.length,
+          total_wakil: wakil.length,
+        });
+      }
+    }
+
+    // 2. Fallback to local storage
     const candidates = getActiveCandidates();
     return NextResponse.json({
       success: true,

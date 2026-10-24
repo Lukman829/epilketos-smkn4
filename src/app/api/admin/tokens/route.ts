@@ -5,6 +5,7 @@ import {
   adminGenerateBatchTokens,
   adminRevokeToken,
 } from '@/lib/storage';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,9 +18,26 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const classId = searchParams.get('class_id');
-    const status = searchParams.get('status');
+    const classId = searchParams.get('class_id') || 'all';
+    const status = searchParams.get('status') || 'all';
 
+    // 1. Fetch from Supabase if configured
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.rpc('admin_get_tokens', {
+        p_class_id: classId,
+        p_status: status,
+      });
+
+      if (!error && Array.isArray(data)) {
+        return NextResponse.json({
+          success: true,
+          total: data.length,
+          tokens: data,
+        });
+      }
+    }
+
+    // 2. Fallback to local in-memory store
     let tokens = getAllTokens();
 
     if (classId && classId !== 'all') {
@@ -76,6 +94,26 @@ export async function POST(req: NextRequest) {
 
     const result = adminGenerateBatchTokens(class_id, tokenCount, admin.name);
 
+    // Persist to Supabase PostgreSQL if configured
+    if (isSupabaseConfigured && supabase) {
+      const supaTokens = result.fullTokens.map((t) => ({
+        id: t.id,
+        token_hash: t.token_hash,
+        token_preview: t.token_preview,
+        class_id: t.class_id,
+        batch_id: t.batch_id,
+      }));
+
+      await supabase.rpc('admin_generate_batch_tokens', {
+        p_batch_id: result.batch.id,
+        p_batch_name: result.batch.batch_name,
+        p_class_id: result.batch.class_id,
+        p_total_tokens: result.generatedTokens.length,
+        p_created_by: admin.name,
+        p_tokens: supaTokens,
+      });
+    }
+
     return NextResponse.json({
       success: true,
       batch: result.batch,
@@ -114,6 +152,26 @@ export async function PATCH(req: NextRequest) {
 
     if (!result.success) {
       return NextResponse.json({ success: false, error: result.error }, { status: 400 });
+    }
+
+    // Persist revocation to Supabase PostgreSQL if configured
+    if (isSupabaseConfigured && supabase) {
+      const replacementPayload = result.replacementRecord
+        ? {
+            id: result.replacementRecord.id,
+            token_hash: result.replacementRecord.token_hash,
+            token_preview: result.replacementRecord.token_preview,
+            class_id: result.replacementRecord.class_id,
+            batch_id: result.replacementRecord.batch_id,
+          }
+        : null;
+
+      await supabase.rpc('admin_revoke_token', {
+        p_token_id: token_id,
+        p_reason: sanitizedReason,
+        p_replacement: replacementPayload,
+        p_revoked_by: admin.name,
+      });
     }
 
     return NextResponse.json({

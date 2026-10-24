@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'fix: strict per-ip login lockout, generic placeholder without username leak, required input validation';
+  const commitMsg = 'feat: integrate Supabase PostgreSQL for persistent voting, tokens, and results';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,

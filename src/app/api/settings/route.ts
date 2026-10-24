@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPublicElectionSettings } from '@/lib/storage';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { getClientIp, rateLimit } from '@/lib/security';
 
 export async function GET(req: NextRequest) {
@@ -18,6 +19,32 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // 1. Fetch from Supabase PostgreSQL if configured
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('election_settings')
+        .select('*')
+        .eq('id', 'default')
+        .single();
+
+      if (!error && data) {
+        return NextResponse.json({
+          success: true,
+          settings: {
+            title: data.title,
+            school_name: data.school_name,
+            period_name: data.period_name,
+            status: data.status,
+            is_results_published: data.is_results_published,
+            start_time: data.start_time,
+            end_time: data.end_time,
+            description: data.description,
+          },
+        });
+      }
+    }
+
+    // 2. Fallback to local storage
     const settings = getPublicElectionSettings();
     return NextResponse.json({ success: true, settings });
   } catch (err: unknown) {

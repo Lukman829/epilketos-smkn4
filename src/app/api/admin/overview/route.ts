@@ -7,6 +7,7 @@ import {
   getAuditLogs,
   store,
 } from '@/lib/storage';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,6 +19,47 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // 1. Fetch live metrics from Supabase if configured
+    if (isSupabaseConfigured && supabase) {
+      const { data: supaRes } = await supabase.rpc('get_election_results', { p_is_admin: true });
+      const { data: supaClasses } = await supabase
+        .from('classes')
+        .select('*')
+        .in('major', ['TKJ', 'TSM', 'TKRO', 'TBSM', 'MPLB', 'AK', 'TEI', 'TITL'])
+        .order('name');
+      const { data: supaAudit } = await supabase.rpc('admin_get_audit_logs', { p_limit: 15 });
+
+      if (supaRes && Array.isArray(supaClasses)) {
+        const classStats = supaClasses.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          quota: c.voter_quota,
+          tokens_generated: c.tokens_generated || 0,
+          voted_count: c.voted_count || 0,
+          turnout_percentage: c.voter_quota > 0 ? Math.round(((c.voted_count || 0) / c.voter_quota) * 100) : 0,
+        }));
+
+        return NextResponse.json({
+          success: true,
+          stats: {
+            total_eligible_voters: supaRes.total_eligible_voters,
+            total_tokens_issued: supaRes.total_tokens_issued,
+            total_tokens_used: supaRes.total_tokens_used,
+            total_tokens_unused: Math.max(0, supaRes.total_tokens_issued - supaRes.total_tokens_used),
+            total_tokens_revoked: 0,
+            total_ballots_recorded: supaRes.total_ballots,
+            turnout_percentage: supaRes.turnout_percentage,
+            election_status: supaRes.settings?.status || 'ongoing',
+            is_results_published: supaRes.is_published,
+            results_published_at: supaRes.published_at,
+          },
+          class_stats: classStats,
+          recent_audit_logs: Array.isArray(supaAudit) ? supaAudit : getAuditLogs().slice(0, 15),
+        });
+      }
+    }
+
+    // 2. Fallback to in-memory store
     const settings = getPublicElectionSettings();
     const tokens = getAllTokens();
     const classes = getAllClasses();

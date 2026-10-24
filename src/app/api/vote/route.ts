@@ -68,22 +68,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Fast-check election status
-    if (store.settings.status === 'not_started') {
-      return NextResponse.json(
-        { success: false, error: 'Pemilihan belum dibuka oleh panitia pelaksana.' },
-        { status: 400 }
-      );
-    }
-
-    if (store.settings.status === 'closed') {
-      return NextResponse.json(
-        { success: false, error: 'Pemilihan telah resmi ditutup oleh panitia.' },
-        { status: 400 }
-      );
-    }
-
-    // 4. If Supabase is fully configured with service role, invoke atomic RPC
+    // 3. Supabase Direct Atomic RPC Transaction
     if (isSupabaseConfigured && supabaseAdmin) {
       const hashed = hashToken(cleanToken);
       const { data, error } = await supabaseAdmin.rpc('cast_vote', {
@@ -106,6 +91,11 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // Keep local in-memory store synchronized
+      try {
+        castVote(cleanToken, cleanKetuaId, cleanWakilId);
+      } catch {}
+
       return NextResponse.json({
         success: true,
         message: 'SUARAMU TELAH TERCATAT.',
@@ -113,7 +103,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 5. Built-in storage engine atomic operation
+    // 4. Built-in storage engine fallback
     const result = castVote(cleanToken, cleanKetuaId, cleanWakilId);
 
     if (!result.success) {

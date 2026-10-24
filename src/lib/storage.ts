@@ -443,7 +443,7 @@ export function adminGenerateBatchTokens(
   classId: string,
   count: number,
   actor: string
-): { batch: TokenBatch; generatedTokens: { token: string; preview: string }[] } {
+): { batch: TokenBatch; generatedTokens: { token: string; preview: string }[]; fullTokens: VotingToken[] } {
   const cls = store.classes.find((c) => c.id === classId);
   if (!cls) throw new Error('Kelas tidak ditemukan');
 
@@ -461,6 +461,7 @@ export function adminGenerateBatchTokens(
   };
 
   const generatedTokens: { token: string; preview: string }[] = [];
+  const fullTokens: VotingToken[] = [];
 
   for (let i = 0; i < count; i++) {
     const plain = generateSecureToken();
@@ -484,6 +485,7 @@ export function adminGenerateBatchTokens(
     };
 
     store.tokens.push(tokenRecord);
+    fullTokens.push(tokenRecord);
     generatedTokens.push({ token: plain, preview });
   }
 
@@ -498,7 +500,7 @@ export function adminGenerateBatchTokens(
     created_at: new Date().toISOString(),
   });
 
-  return { batch: newBatch, generatedTokens };
+  return { batch: newBatch, generatedTokens, fullTokens };
 }
 
 export function adminRevokeToken(
@@ -506,7 +508,7 @@ export function adminRevokeToken(
   reason: string,
   generateReplacement: boolean,
   actor: string
-): { success: boolean; replacementToken?: string; error?: string } {
+): { success: boolean; replacementToken?: string; replacementRecord?: VotingToken; error?: string } {
   const token = store.tokens.find((t) => t.id === tokenId);
   if (!token) return { success: false, error: 'Token tidak ditemukan' };
 
@@ -523,6 +525,7 @@ export function adminRevokeToken(
   token.revoked_reason = reason;
 
   let replacementTokenPlain: string | undefined = undefined;
+  let replacementRecord: VotingToken | undefined = undefined;
 
   if (generateReplacement) {
     const plain = generateSecureToken();
@@ -549,6 +552,7 @@ export function adminRevokeToken(
     token.replacement_token_id = replacementId;
     store.tokens.push(newToken);
     replacementTokenPlain = plain;
+    replacementRecord = newToken;
   }
 
   store.auditLogs.unshift({
@@ -564,7 +568,7 @@ export function adminRevokeToken(
     created_at: now,
   });
 
-  return { success: true, replacementToken: replacementTokenPlain };
+  return { success: true, replacementToken: replacementTokenPlain, replacementRecord };
 }
 
 // Candidates Admin CRUD

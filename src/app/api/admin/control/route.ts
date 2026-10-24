@@ -4,6 +4,7 @@ import {
   adminToggleElectionStatus,
   adminPublishResults,
 } from '@/lib/storage';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,6 +27,14 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // 1. Persist to Supabase if configured
+      if (isSupabaseConfigured && supabase) {
+        await supabase.rpc('admin_toggle_status', {
+          p_status: status,
+          p_updated_by: admin.name,
+        });
+      }
+
       const updated = adminToggleElectionStatus(status, admin.name);
       return NextResponse.json({
         success: true,
@@ -35,11 +44,21 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'publish_results') {
-      const updated = adminPublishResults(Boolean(is_published), admin.name);
+      const isPub = Boolean(is_published);
+
+      // 1. Persist to Supabase if configured
+      if (isSupabaseConfigured && supabase) {
+        await supabase.rpc('admin_publish_results', {
+          p_is_published: isPub,
+          p_published_by: admin.name,
+        });
+      }
+
+      const updated = adminPublishResults(isPub, admin.name);
       return NextResponse.json({
         success: true,
         settings: updated,
-        message: is_published
+        message: isPub
           ? 'Hasil pemilihan berhasil dipublikasikan secara resmi ke publik.'
           : 'Publikasi hasil pemilihan resmi telah ditarik kembali.',
       });

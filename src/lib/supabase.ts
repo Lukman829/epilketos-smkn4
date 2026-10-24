@@ -6,12 +6,12 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-// Public client for browser operations
+// Public / Standard client
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-// Privileged server client with service-role for admin actions & atomic RPC
+// Privileged server client (or fallback to SECURITY DEFINER client)
 export const supabaseAdmin = Boolean(supabaseUrl && supabaseServiceKey)
   ? createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
@@ -19,4 +19,4 @@ export const supabaseAdmin = Boolean(supabaseUrl && supabaseServiceKey)
         persistSession: false,
       },
     })
-  : null;
+  : supabase;
