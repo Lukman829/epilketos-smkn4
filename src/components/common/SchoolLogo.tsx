@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { SCHOOL_LOGO_DATA_URI } from '@/lib/schoolLogoData';
 
 interface SchoolLogoProps {
   className?: string;
@@ -15,7 +16,18 @@ export default function SchoolLogo({
   alt = 'Logo Resmi SMK Negeri 4 Kota Serang',
   variant = 'raw',
 }: SchoolLogoProps) {
+  // Primary attempt loads static /logo-smkn4.png. If not present (e.g. deployed without public asset),
+  // seamlessly fall back to encoded data URI, and finally to clean badge if both fail.
+  const [src, setSrc] = useState<string>('/logo-smkn4.png');
   const [hasError, setHasError] = useState(false);
+
+  const handleError = () => {
+    if (src !== SCHOOL_LOGO_DATA_URI) {
+      setSrc(SCHOOL_LOGO_DATA_URI);
+    } else {
+      setHasError(true);
+    }
+  };
 
   if (hasError) {
     return (
@@ -38,11 +50,11 @@ export default function SchoolLogo({
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/logo-smkn4.png"
+      src={src}
       alt={alt}
       width={size}
       height={size}
-      onError={() => setHasError(true)}
+      onError={handleError}
       className={`${className} ${containerClasses} object-contain transition-transform`}
       loading="eager"
     />
