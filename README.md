@@ -80,9 +80,8 @@ flowchart TD
    - Setelah diterbitkan admin: Grafik perolehan suara live, persentase resmi, dan total pemilih sah terverifikasi.
 
 ### B. Portal Administrasi Panitia (`/admin`)
-Hanya 2 akun terotorisasi:
-1. **Ketua Panitia**: `ketua.panitia` (Kata sandi default: `SerangUnggul2026!`)
-2. **Admin Utama**: `admin.utama` (Kata sandi default: `PilketoSMKN4_Secure!`)
+Hanya 1 akun administrator tunggal terotorisasi:
+- **Administrator Utama**: `admin.utama` (Kata sandi default: `PilketoSMKN4_Secure!`)
 
 Fitur Panel:
 - **Ikhtisar Dashboard**: Metrik token diterbitkan, dipakai, sisa, dibatalkan, total surat suara, dan turnout per kelas.

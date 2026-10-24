@@ -1,10 +1,15 @@
 import {
   signAdminToken,
   verifyAdminToken,
+  revokeAdminToken,
   constantTimeCompare,
   rateLimit,
   sanitizeString,
   isValidTokenFormat,
+  checkLoginLockout,
+  recordFailedLogin,
+  resetFailedLogin,
+  getClientIp,
 } from '../src/lib/security';
 
 console.log('====================================================');
@@ -121,5 +126,40 @@ assert(checkCsrf('https://epilketos-smkn4.vercel.app', 'epilketos-smkn4.vercel.a
 assert(checkCsrf('https://evil-attacker.com', 'epilketos-smkn4.vercel.app') === false, 'CSRF guard rejects malicious cross-origin requests');
 assert(checkCsrf('http://localhost:3000', 'localhost:3000') === true, 'CSRF guard allows local development host');
 assert(checkCsrf('malformed-uri', 'epilketos-smkn4.vercel.app') === false, 'CSRF guard rejects malformed origin header');
+
+// 10. Server-Side Session Revocation
+const revokableToken = signAdminToken({ username: 'admin.utama', name: 'Admin', role: 'admin_utama' });
+const beforeRevoke = verifyAdminToken(revokableToken);
+assert(beforeRevoke.valid === true, 'Token is valid before revocation');
+const revoked = revokeAdminToken(revokableToken);
+assert(revoked === true, 'Revoke admin token succeeds');
+const afterRevoke = verifyAdminToken(revokableToken);
+assert(afterRevoke.valid === false, 'Revoked token is immediately rejected server-side (Zombie session prevented)');
+
+// 11. Dual-Key Brute-Force Lockout & Account Protection
+const testLockoutIp = 'ip:198.51.100.25';
+for (let attempt = 1; attempt <= 4; attempt++) {
+  const rec = recordFailedLogin(testLockoutIp, 5, 10000);
+  assert(rec.locked === false, `Failed login attempt ${attempt} does not lock prematurely`);
+}
+const fifthAttempt = recordFailedLogin(testLockoutIp, 5, 10000);
+assert(fifthAttempt.locked === true, '5th consecutive failed attempt triggers security lockout');
+const lockoutStatus = checkLoginLockout(testLockoutIp);
+assert(lockoutStatus.locked === true && lockoutStatus.retryAfterSeconds > 0, 'IP remains locked during active lockout window');
+
+// Reset on successful login
+resetFailedLogin(testLockoutIp);
+const postResetStatus = checkLoginLockout(testLockoutIp);
+assert(postResetStatus.locked === false, 'Lockout record is cleared upon valid authentication');
+
+// 12. Client IP Anti-Spoofing Priority
+const mockReq = {
+  headers: new Headers({
+    'x-forwarded-for': '203.0.113.195, 10.0.0.1',
+    'x-vercel-forwarded-for': '198.51.100.77',
+  }),
+} as any;
+const extractedIp = getClientIp(mockReq);
+assert(extractedIp === '198.51.100.77', 'Vercel edge trusted header takes precedence over spoofable client x-forwarded-for');
 
 console.log(`\nResults: ${passedTests}/${totalTests} security tests passed.\n`);

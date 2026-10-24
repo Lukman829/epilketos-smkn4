@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminFromRequest, getClientIp } from '@/lib/security';
+import { getAdminFromRequest, getClientIp, revokeAdminToken } from '@/lib/security';
 import { recordAuditLog } from '@/lib/storage';
 
 export async function POST(req: NextRequest) {
   try {
     const admin = getAdminFromRequest(req);
     const clientIp = getClientIp(req);
+
+    // Revoke token server-side so it cannot be reused even if intercepted
+    const authHeader = req.headers.get('authorization');
+    const cookieToken = req.cookies.get('epilketos_admin_session')?.value;
+    const token = (authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : cookieToken)?.trim();
+    if (token) {
+      revokeAdminToken(token);
+    }
 
     if (admin) {
       recordAuditLog('ADMIN_LOGOUT', admin.name, {

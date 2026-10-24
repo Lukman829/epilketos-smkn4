@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'feat: comprehensive security hardening (proxy, csrf guard, side-channel decoupling, logout route)';
+  const commitMsg = 'feat: single admin account, dual-key brute-force lockout, server session revocation, anti-spoof IP';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,

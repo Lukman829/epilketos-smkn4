@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
             Portal Administrasi
           </h1>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            Hanya untuk Ketua Panitia dan Admin Utama resmi SMKN 4 Kota Serang.
+            Hanya untuk Administrator Utama resmi SMKN 4 Kota Serang.
           </p>
         </div>
 
@@ -90,7 +90,7 @@ export default function AdminLoginPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="ketua.panitia atau admin.utama"
+                  placeholder="admin.utama"
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-600 focus:bg-white focus:outline-none text-sm text-slate-900 placeholder-slate-400 transition-colors"
                   required
                 />

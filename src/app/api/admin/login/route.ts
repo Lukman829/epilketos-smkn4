@@ -2,37 +2,33 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   signAdminToken,
   constantTimeCompare,
-  rateLimit,
   getClientIp,
+  checkLoginLockout,
+  recordFailedLogin,
+  resetFailedLogin,
+  rateLimit,
 } from '@/lib/security';
 import { recordAuditLog } from '@/lib/storage';
 
-const VALID_ADMINS = [
-  {
-    username: process.env.ADMIN_KETUA_USERNAME || 'ketua.panitia',
-    password: process.env.ADMIN_KETUA_PASSWORD || 'SerangUnggul2026!',
-    name: 'Ketua Panitia E-PILKETOS',
-    role: 'ketua_panitia',
-  },
-  {
-    username: process.env.ADMIN_UTAMA_USERNAME || 'admin.utama',
-    password: process.env.ADMIN_UTAMA_PASSWORD || 'PilketoSMKN4_Secure!',
-    name: 'Admin Utama Sistem',
-    role: 'admin_utama',
-  },
-];
+// 1 Single Official Administrator Account for SMKN 4 Kota Serang
+const SINGLE_ADMIN = {
+  username: process.env.ADMIN_USERNAME || process.env.ADMIN_UTAMA_USERNAME || 'admin.utama',
+  password: process.env.ADMIN_PASSWORD || process.env.ADMIN_UTAMA_PASSWORD || 'PilketoSMKN4_Secure!',
+  name: 'Administrator Utama E-PILKETOS',
+  role: 'admin_utama',
+};
 
 export async function POST(req: NextRequest) {
   try {
     const clientIp = getClientIp(req);
 
-    // Brute-force protection: max 5 login attempts per 5 minutes per IP
-    const rl = rateLimit(`login:${clientIp}`, 5, 5 * 60 * 1000);
-    if (!rl.allowed) {
+    // General rate limiter on login endpoint: max 20 requests per minute to prevent socket flooding
+    const generalRl = rateLimit(`login-flood:${clientIp}`, 20, 60 * 1000);
+    if (!generalRl.allowed) {
       return NextResponse.json(
         {
           success: false,
-          error: `Terlalu banyak percobaan masuk yang gagal. Akses diblokir sementara selama ${rl.retryAfterSeconds} detik demi keamanan.`,
+          error: `Terlalu banyak request ke server login. Silakan tunggu ${generalRl.retryAfterSeconds} detik.`,
         },
         { status: 429 }
       );
@@ -51,56 +47,98 @@ export async function POST(req: NextRequest) {
     const cleanUsername = username.trim();
     const cleanPassword = password.trim();
 
-    // Constant-time search across authorized accounts to prevent timing analysis
-    const admin = VALID_ADMINS.find(
-      (a) =>
-        constantTimeCompare(a.username, cleanUsername) &&
-        constantTimeCompare(a.password, cleanPassword)
-    );
-
-    if (!admin) {
+    // 1. Dual-Key Brute-Force Check: Verify if IP or Account is currently locked out
+    const ipLockout = checkLoginLockout(`ip:${clientIp}`);
+    if (ipLockout.locked) {
       return NextResponse.json(
-        { success: false, error: 'Kredensial akun panitia tidak cocok.' },
+        {
+          success: false,
+          error: `Terlalu banyak percobaan masuk yang gagal dari alamat IP ini. Akses diblokir selama ${ipLockout.retryAfterSeconds} detik demi keamanan sistem.`,
+        },
+        { status: 429 }
+      );
+    }
+
+    const userLockout = checkLoginLockout(`user:${cleanUsername}`);
+    if (userLockout.locked) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Akun administrator ini sedang dikunci sementara karena rentetan kegagalan masuk. Silakan tunggu ${userLockout.retryAfterSeconds} detik.`,
+        },
+        { status: 429 }
+      );
+    }
+
+    // 2. Unconditional Constant-Time Authentication
+    // Both username and password comparisons are executed without short-circuiting to prevent timing side-channels
+    const usernameMatches = constantTimeCompare(SINGLE_ADMIN.username, cleanUsername);
+    const passwordMatches = constantTimeCompare(SINGLE_ADMIN.password, cleanPassword);
+    const isAuthenticated = usernameMatches && passwordMatches;
+
+    // 3. Failed Authentication Branch
+    if (!isAuthenticated) {
+      // Record failure for both IP and Username (locks out after 5 consecutive failures for 15 minutes)
+      const ipRecord = recordFailedLogin(`ip:${clientIp}`, 5, 15 * 60 * 1000);
+      recordFailedLogin(`user:${cleanUsername}`, 5, 15 * 60 * 1000);
+
+      recordAuditLog('ADMIN_LOGIN_FAILED', 'Sistem Keamanan', {
+        attempted_username: cleanUsername.slice(0, 50),
+        ip: clientIp,
+        remaining_attempts: Math.max(0, 5 - ipRecord.attempts),
+        timestamp: new Date().toISOString(),
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Kredensial akun panitia tidak cocok.',
+          remaining_attempts: Math.max(0, 5 - ipRecord.attempts),
+        },
         { status: 401 }
       );
     }
 
-    // Sign cryptographic session token (HMAC-SHA256, 8-hour expiry)
-    const token = signAdminToken({
-      username: admin.username,
-      name: admin.name,
-      role: admin.role,
-    });
+    // 4. Successful Authentication Branch
+    // Reset lockout counters on valid login
+    resetFailedLogin(`ip:${clientIp}`);
+    resetFailedLogin(`user:${cleanUsername}`);
+
+    // Sign cryptographic session token (HMAC-SHA256, 2-hour lifespan with unique jti)
+    const token = signAdminToken(
+      {
+        username: SINGLE_ADMIN.username,
+        name: SINGLE_ADMIN.name,
+        role: SINGLE_ADMIN.role,
+      },
+      2 * 3600 // 2 hours
+    );
 
     // Record audit log for successful admin login
-    recordAuditLog(
-      'ADMIN_LOGIN_SUCCESS',
-      admin.name,
-      {
-        username: admin.username,
-        role: admin.role,
-        ip: clientIp,
-        timestamp: new Date().toISOString(),
-      }
-    );
+    recordAuditLog('ADMIN_LOGIN_SUCCESS', SINGLE_ADMIN.name, {
+      username: SINGLE_ADMIN.username,
+      role: SINGLE_ADMIN.role,
+      ip: clientIp,
+      timestamp: new Date().toISOString(),
+    });
 
     const response = NextResponse.json({
       success: true,
       token,
       admin: {
-        username: admin.username,
-        name: admin.name,
-        role: admin.role,
+        username: SINGLE_ADMIN.username,
+        name: SINGLE_ADMIN.name,
+        role: SINGLE_ADMIN.role,
       },
     });
 
-    // Set secure HTTP-only cookie
+    // Set secure HTTP-only cookie with SameSite=Strict and 2-hour lifetime
     response.cookies.set('epilketos_admin_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
-      maxAge: 8 * 3600, // 8 hours
+      maxAge: 2 * 3600, // 2 hours
     });
 
     return response;
