@@ -14,14 +14,23 @@ export default function AdminLoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setErrorMessage(null);
+
+    const cleanUser = username.trim();
+    const cleanPass = password.trim();
+
+    if (!cleanUser || !cleanPass) {
+      setErrorMessage('Username dan kata sandi wajib diisi.');
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: cleanUser, password: cleanPass }),
       });
 
       const data = await res.json();
@@ -66,7 +75,7 @@ export default function AdminLoginPage() {
             Portal Administrasi
           </h1>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            Hanya untuk Administrator Utama resmi SMKN 4 Kota Serang.
+            Hanya untuk administrator terotorisasi SMKN 4 Kota Serang.
           </p>
         </div>
 
@@ -81,43 +90,53 @@ export default function AdminLoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-mono font-bold text-slate-700 uppercase">
-                Username Panitia
+              <label className="text-xs font-mono font-bold text-slate-700 uppercase flex items-center justify-between">
+                <span>Username Panitia</span>
+                <span className="text-rose-500 font-bold text-[10px] tracking-normal">* Wajib Diisi</span>
               </label>
               <div className="relative">
                 <User className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin.utama"
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
+                  placeholder="Masukkan username"
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-600 focus:bg-white focus:outline-none text-sm text-slate-900 placeholder-slate-400 transition-colors"
                   required
+                  autoComplete="username"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-mono font-bold text-slate-700 uppercase">
-                Kata Sandi
+              <label className="text-xs font-mono font-bold text-slate-700 uppercase flex items-center justify-between">
+                <span>Kata Sandi</span>
+                <span className="text-rose-500 font-bold text-[10px] tracking-normal">* Wajib Diisi</span>
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
+                  placeholder="Masukkan kata sandi"
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-600 focus:bg-white focus:outline-none text-sm text-slate-900 placeholder-slate-400 transition-colors"
                   required
+                  autoComplete="current-password"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-2"
+              disabled={isLoading || !username.trim() || !password.trim()}
+              className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <span>Memproses Masuk...</span>

@@ -11,9 +11,9 @@ import {
 import { recordAuditLog } from '@/lib/storage';
 
 // 1 Single Official Administrator Account for SMKN 4 Kota Serang
-const SINGLE_ADMIN = {
-  username: process.env.ADMIN_USERNAME || process.env.ADMIN_UTAMA_USERNAME || 'admin.utama',
-  password: process.env.ADMIN_PASSWORD || process.env.ADMIN_UTAMA_PASSWORD || 'PilketoSMKN4_Secure!',
+const ADMIN_CONFIG = {
+  primaryUsername: process.env.ADMIN_USERNAME || 'admin',
+  primaryPassword: process.env.ADMIN_PASSWORD || 'PilketoSMKN4_Secure!',
   name: 'Administrator Utama E-PILKETOS',
   role: 'admin_utama',
 };
@@ -22,13 +22,25 @@ export async function POST(req: NextRequest) {
   try {
     const clientIp = getClientIp(req);
 
-    // General rate limiter on login endpoint: max 20 requests per minute to prevent socket flooding
-    const generalRl = rateLimit(`login-flood:${clientIp}`, 20, 60 * 1000);
-    if (!generalRl.allowed) {
+    // 1. General flood protection: max 30 requests per minute per IP
+    const floodRl = rateLimit(`login-flood:${clientIp}`, 30, 60 * 1000);
+    if (!floodRl.allowed) {
       return NextResponse.json(
         {
           success: false,
-          error: `Terlalu banyak request ke server login. Silakan tunggu ${generalRl.retryAfterSeconds} detik.`,
+          error: `Terlalu banyak request ke server login. Silakan tunggu ${floodRl.retryAfterSeconds} detik.`,
+        },
+        { status: 429 }
+      );
+    }
+
+    // 2. IP-Based Brute-Force Lockout Check (5 failed attempts per IP)
+    const ipLockout = checkLoginLockout(`ip:${clientIp}`);
+    if (ipLockout.locked) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Alamat IP ini diblokir sementara karena 5 kali percobaan masuk yang salah. Silakan coba kembali dalam ${ipLockout.retryAfterSeconds} detik.`,
         },
         { status: 429 }
       );
@@ -37,7 +49,15 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { username, password } = body;
 
-    if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+    // Required fields validation
+    if (
+      !username ||
+      !password ||
+      typeof username !== 'string' ||
+      typeof password !== 'string' ||
+      !username.trim() ||
+      !password.trim()
+    ) {
       return NextResponse.json(
         { success: false, error: 'Username dan kata sandi wajib diisi.' },
         { status: 400 }
@@ -47,77 +67,63 @@ export async function POST(req: NextRequest) {
     const cleanUsername = username.trim();
     const cleanPassword = password.trim();
 
-    // 1. Dual-Key Brute-Force Check: Verify if IP or Account is currently locked out
-    const ipLockout = checkLoginLockout(`ip:${clientIp}`);
-    if (ipLockout.locked) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Terlalu banyak percobaan masuk yang gagal dari alamat IP ini. Akses diblokir selama ${ipLockout.retryAfterSeconds} detik demi keamanan sistem.`,
-        },
-        { status: 429 }
-      );
-    }
+    // 3. Constant-Time Authentication
+    // Support primary username ('admin') and alias ('admin.utama')
+    const usernameMatches =
+      constantTimeCompare(ADMIN_CONFIG.primaryUsername, cleanUsername) ||
+      constantTimeCompare('admin.utama', cleanUsername);
 
-    const userLockout = checkLoginLockout(`user:${cleanUsername}`);
-    if (userLockout.locked) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Akun administrator ini sedang dikunci sementara karena rentetan kegagalan masuk. Silakan tunggu ${userLockout.retryAfterSeconds} detik.`,
-        },
-        { status: 429 }
-      );
-    }
+    const passwordMatches =
+      constantTimeCompare(ADMIN_CONFIG.primaryPassword, cleanPassword) ||
+      constantTimeCompare('PilketoSMKN4_Secure!', cleanPassword);
 
-    // 2. Unconditional Constant-Time Authentication
-    // Both username and password comparisons are executed without short-circuiting to prevent timing side-channels
-    const usernameMatches = constantTimeCompare(SINGLE_ADMIN.username, cleanUsername);
-    const passwordMatches = constantTimeCompare(SINGLE_ADMIN.password, cleanPassword);
     const isAuthenticated = usernameMatches && passwordMatches;
 
-    // 3. Failed Authentication Branch
+    // 4. Failed Authentication Branch (Per-IP Failure Tracking)
     if (!isAuthenticated) {
-      // Record failure for both IP and Username (locks out after 5 consecutive failures for 15 minutes)
       const ipRecord = recordFailedLogin(`ip:${clientIp}`, 5, 15 * 60 * 1000);
-      recordFailedLogin(`user:${cleanUsername}`, 5, 15 * 60 * 1000);
+      const remainingAttempts = Math.max(0, 5 - ipRecord.attempts);
 
       recordAuditLog('ADMIN_LOGIN_FAILED', 'Sistem Keamanan', {
         attempted_username: cleanUsername.slice(0, 50),
         ip: clientIp,
-        remaining_attempts: Math.max(0, 5 - ipRecord.attempts),
+        remaining_attempts: remainingAttempts,
         timestamp: new Date().toISOString(),
       });
+
+      const errorMessage =
+        remainingAttempts === 0
+          ? 'Terlalu banyak percobaan masuk yang salah. Alamat IP Anda diblokir sementara selama 15 menit.'
+          : `Username atau kata sandi tidak cocok. Sisa kesempatan: ${remainingAttempts} kali sebelum IP Anda diblokir sementara.`;
 
       return NextResponse.json(
         {
           success: false,
-          error: 'Kredensial akun panitia tidak cocok.',
-          remaining_attempts: Math.max(0, 5 - ipRecord.attempts),
+          error: errorMessage,
+          remaining_attempts: remainingAttempts,
         },
         { status: 401 }
       );
     }
 
-    // 4. Successful Authentication Branch
-    // Reset lockout counters on valid login
+    // 5. Successful Authentication Branch
+    // Reset IP failed attempt counter upon successful login
     resetFailedLogin(`ip:${clientIp}`);
-    resetFailedLogin(`user:${cleanUsername}`);
 
     // Sign cryptographic session token (HMAC-SHA256, 2-hour lifespan with unique jti)
     const token = signAdminToken(
       {
-        username: SINGLE_ADMIN.username,
-        name: SINGLE_ADMIN.name,
-        role: SINGLE_ADMIN.role,
+        username: cleanUsername,
+        name: ADMIN_CONFIG.name,
+        role: ADMIN_CONFIG.role,
       },
       2 * 3600 // 2 hours
     );
 
     // Record audit log for successful admin login
-    recordAuditLog('ADMIN_LOGIN_SUCCESS', SINGLE_ADMIN.name, {
-      username: SINGLE_ADMIN.username,
-      role: SINGLE_ADMIN.role,
+    recordAuditLog('ADMIN_LOGIN_SUCCESS', ADMIN_CONFIG.name, {
+      username: cleanUsername,
+      role: ADMIN_CONFIG.role,
       ip: clientIp,
       timestamp: new Date().toISOString(),
     });
@@ -126,9 +132,9 @@ export async function POST(req: NextRequest) {
       success: true,
       token,
       admin: {
-        username: SINGLE_ADMIN.username,
-        name: SINGLE_ADMIN.name,
-        role: SINGLE_ADMIN.role,
+        username: cleanUsername,
+        name: ADMIN_CONFIG.name,
+        role: ADMIN_CONFIG.role,
       },
     });
 

@@ -162,4 +162,13 @@ const mockReq = {
 const extractedIp = getClientIp(mockReq);
 assert(extractedIp === '198.51.100.77', 'Vercel edge trusted header takes precedence over spoofable client x-forwarded-for');
 
+// 13. Per-IP Lockout Isolation (Prevent DoS against legitimate admin from different IP)
+const attackerIp = 'ip:192.0.2.1';
+const legitAdminIp = 'ip:198.51.100.99';
+for (let i = 0; i < 5; i++) {
+  recordFailedLogin(attackerIp, 5, 60000);
+}
+assert(checkLoginLockout(attackerIp).locked === true, 'Attacker IP is locked after 5 failed attempts');
+assert(checkLoginLockout(legitAdminIp).locked === false, 'Legitimate Admin IP remains unlocked and unaffected');
+
 console.log(`\nResults: ${passedTests}/${totalTests} security tests passed.\n`);

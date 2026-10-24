@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'feat: single admin account, dual-key brute-force lockout, server session revocation, anti-spoof IP';
+  const commitMsg = 'fix: strict per-ip login lockout, generic placeholder without username leak, required input validation';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,
