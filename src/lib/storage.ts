@@ -286,12 +286,17 @@ export function castVote(
   }
 
   // Insert Anonymous Ballot (NO reference to token_id, class_id, or student!)
+  // Cryptographic privacy protection against side-channel correlation:
+  // 1. Ballot timestamp is bucketed to the hour to eliminate millisecond timestamp matching
+  // 2. Ballot is inserted at a randomized index to eliminate sequential array order correlation
   const ballotId = `blt-${crypto.randomUUID()}`;
-  store.ballots.push({
+  const hourBucketTimestamp = new Date(Math.floor(Date.now() / 3600000) * 3600000).toISOString();
+  const randomInsertPos = Math.floor(Math.random() * (store.ballots.length + 1));
+  store.ballots.splice(randomInsertPos, 0, {
     id: ballotId,
     candidate_ketua_id: candidateKetuaId,
     candidate_wakil_id: candidateWakilId,
-    created_at: now,
+    created_at: hourBucketTimestamp,
   });
 
   return {

@@ -41,10 +41,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [pathname, isLoginPage, router]);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('epilketos_admin_token');
-    sessionStorage.removeItem('epilketos_admin_user');
-    router.push('/admin/login');
+  const handleLogout = async () => {
+    try {
+      const token = sessionStorage.getItem('epilketos_admin_token');
+      await fetch('/api/admin/logout', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      sessionStorage.removeItem('epilketos_admin_token');
+      sessionStorage.removeItem('epilketos_admin_user');
+      router.push('/admin/login');
+    }
   };
 
   if (isLoginPage) {

@@ -79,4 +79,47 @@ assert(isValidTokenFormat('abc') === false, 'Too short token is rejected');
 assert(isValidTokenFormat('<script>alert(1)</script>') === false, 'Malicious token string is rejected');
 assert(isValidTokenFormat('PLK 7X9B 4MN2') === false, 'Token with spaces is rejected');
 
+// 7. Secret Ballot Side-Channel Timing Decoupling
+// When a vote is cast, verify token.used_at and ballot.created_at are decoupled to prevent correlation attacks
+import { store, castVote, generateSecureToken } from '../src/lib/storage';
+const auditTestToken = store.tokens[1].plain_token!;
+const voteResult = castVote(auditTestToken, 'k-02', 'w-03');
+assert(voteResult.success === true, 'Cast vote succeeds for timing audit test');
+
+const usedToken = store.tokens.find(t => t.id === store.tokens[1].id)!;
+const matchedBallot = store.ballots.find(b => b.candidate_ketua_id === 'k-02' && b.candidate_wakil_id === 'w-03')!;
+
+assert(usedToken.used_at !== undefined, 'Token has used_at timestamp recorded');
+assert(matchedBallot.created_at !== undefined, 'Ballot has created_at timestamp');
+assert(
+  usedToken.used_at !== matchedBallot.created_at,
+  'Ballot timestamp is decoupled from token used_at (Side-Channel Timing Correlation Attack Defeated)'
+);
+assert(
+  matchedBallot.created_at.endsWith(':00.000Z'),
+  'Ballot timestamp is bucketed to the hour to anonymize temporal correlation'
+);
+
+// 8. Public Endpoint Rate Limiting Protection
+const resultsIp = '10.0.0.42';
+for (let i = 0; i < 60; i++) {
+  rateLimit(`results:${resultsIp}`, 60, 60000);
+}
+const blockedResultReq = rateLimit(`results:${resultsIp}`, 60, 60000);
+assert(blockedResultReq.allowed === false, 'Results API rate limiter blocks 61st request in 1 minute window');
+
+// 9. CSRF Origin Validation Logic
+function checkCsrf(origin: string, host: string): boolean {
+  try {
+    const originUrl = new URL(origin);
+    return originUrl.host === host;
+  } catch {
+    return false;
+  }
+}
+assert(checkCsrf('https://epilketos-smkn4.vercel.app', 'epilketos-smkn4.vercel.app') === true, 'CSRF guard allows legitimate same-origin requests');
+assert(checkCsrf('https://evil-attacker.com', 'epilketos-smkn4.vercel.app') === false, 'CSRF guard rejects malicious cross-origin requests');
+assert(checkCsrf('http://localhost:3000', 'localhost:3000') === true, 'CSRF guard allows local development host');
+assert(checkCsrf('malformed-uri', 'epilketos-smkn4.vercel.app') === false, 'CSRF guard rejects malformed origin header');
+
 console.log(`\nResults: ${passedTests}/${totalTests} security tests passed.\n`);

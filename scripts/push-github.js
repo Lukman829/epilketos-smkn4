@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'feat: complete removal of demo/simulation token pills and mock traces';
+  const commitMsg = 'feat: comprehensive security hardening (proxy, csrf guard, side-channel decoupling, logout route)';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,
