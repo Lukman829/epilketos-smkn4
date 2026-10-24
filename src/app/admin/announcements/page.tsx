@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { ClassRecord } from '@/types/election';
 import { exportClassTokensToExcel, TokenExportItem } from '@/lib/excelExport';
+import SchoolLogo from '@/components/common/SchoolLogo';
 
 export default function AdminAnnouncementsPage() {
   const [classes, setClasses] = useState<ClassRecord[]>([]);
@@ -675,22 +676,27 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
             {activeTab === 'letter' && (
               <div className="p-8 sm:p-12 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6 text-slate-900">
                 {/* Kop Surat SMKN 4 Kota Serang */}
-                <div className="text-center space-y-1 pb-4 border-b-4 border-double border-slate-900">
-                  <p className="text-xs font-black uppercase tracking-wider text-slate-600">
-                    PEMERINTAH DAERAH PROVINSI BANTEN
-                  </p>
-                  <p className="text-sm font-black uppercase tracking-wider text-slate-700">
-                    DINAS PENDIDIKAN DAN KEBUDAYAAN
-                  </p>
-                  <h2 className="text-xl font-black uppercase tracking-tight text-slate-900">
-                    SMK NEGERI 4 KOTA SERANG
-                  </h2>
-                  <p className="text-[11px] font-medium text-slate-500">
-                    Jl. Raya Taktakan KM 03, Panggungjati, Kec. Taktakan, Kota Serang, Banten 42162
-                  </p>
-                  <p className="text-[11px] font-bold text-blue-700">
-                    KOMISI PEMILIHAN KETUA &amp; WAKIL KETUA OSIS — MASA BAKTI 2026/2027
-                  </p>
+                <div className="pb-4 border-b-4 border-double border-slate-900 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                  <div className="flex-shrink-0">
+                    <SchoolLogo className="w-20 h-20 object-contain drop-shadow-sm" size={80} />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-600">
+                      PEMERINTAH DAERAH PROVINSI BANTEN
+                    </p>
+                    <p className="text-sm font-black uppercase tracking-wider text-slate-700">
+                      DINAS PENDIDIKAN DAN KEBUDAYAAN
+                    </p>
+                    <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900">
+                      SMK NEGERI 4 KOTA SERANG
+                    </h2>
+                    <p className="text-[11px] font-medium text-slate-500">
+                      Jl. Raya Taktakan KM 03, Panggungjati, Kec. Taktakan, Kota Serang, Banten 42162
+                    </p>
+                    <p className="text-[11px] font-bold text-blue-700">
+                      KOMISI PEMILIHAN KETUA &amp; WAKIL KETUA OSIS — MASA BAKTI 2026/2027
+                    </p>
+                  </div>
                 </div>
 
                 {/* Letter Meta */}

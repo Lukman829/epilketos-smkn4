@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Printer, ArrowLeft, Scissors } from 'lucide-react';
 import Link from 'next/link';
+import SchoolLogo from '@/components/common/SchoolLogo';
 
 interface TokenItem {
   id: string;
@@ -105,9 +106,7 @@ export default function PrintTokensPage() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-200 pb-2">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-slate-900 text-white font-mono font-bold text-[10px] flex items-center justify-center">
-                  4SK
-                </div>
+                <SchoolLogo className="w-6 h-6 object-contain" size={24} />
                 <div>
                   <h4 className="font-extrabold text-[11px] leading-tight text-slate-900">
                     E-PILKETOS SMKN 4

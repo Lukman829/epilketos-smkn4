@@ -8,6 +8,7 @@ import HeroOrb from '@/components/3d/HeroOrb';
 import CinematicIntro from '@/components/public/CinematicIntro';
 import CandidateCard from '@/components/public/CandidateCard';
 import CandidateDetailModal from '@/components/public/CandidateDetailModal';
+import SchoolLogo from '@/components/common/SchoolLogo';
 import { Candidate, ElectionSettings } from '@/types/election';
 import {
   Vote,
@@ -90,7 +91,7 @@ export default function HomePage() {
               <div className="lg:col-span-7 space-y-8 text-center lg:text-left z-10">
                 {/* Official Pill */}
                 <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm text-xs font-semibold text-slate-700">
-                  <span className="w-2 h-2 rounded-full bg-blue-600" />
+                  <SchoolLogo className="w-4 h-4 object-contain" size={16} />
                   <span className="font-mono text-blue-600 font-bold uppercase tracking-wider">
                     E-PILKETOS 2026
                   </span>

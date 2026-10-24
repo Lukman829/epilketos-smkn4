@@ -25,7 +25,11 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'Panitia E-PILKETOS SMKN 4 Kota Serang' }],
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/logo-smkn4.png', type: 'image/png' },
+    ],
+    apple: '/logo-smkn4.png',
   },
 };
 

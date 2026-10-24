@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { SCHOOL_INFO } from '@/lib/constants';
 import { Shield, Sparkles, MapPin, ExternalLink, Heart } from 'lucide-react';
+import SchoolLogo from '@/components/common/SchoolLogo';
 
 export default function Footer() {
   return (
@@ -13,9 +14,7 @@ export default function Footer() {
           {/* Brand & School Bio */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white font-mono font-bold text-sm">
-                <span className="text-blue-400">4</span>SK
-              </div>
+              <SchoolLogo className="w-12 h-12 object-contain flex-shrink-0 drop-shadow-sm" size={48} />
               <div>
                 <h4 className="font-extrabold text-slate-900 tracking-tight text-base">
                   {SCHOOL_INFO.appTitle}

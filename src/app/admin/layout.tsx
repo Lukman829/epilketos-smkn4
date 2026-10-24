@@ -17,6 +17,7 @@ import {
   ExternalLink,
   Megaphone,
 } from 'lucide-react';
+import SchoolLogo from '@/components/common/SchoolLogo';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -76,10 +77,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col md:flex-row">
       {/* Mobile Topbar */}
       <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center font-mono font-bold text-xs text-white">
-            4SK
-          </div>
+        <div className="flex items-center gap-2.5">
+          <SchoolLogo className="w-8 h-8 object-contain" size={32} />
           <span className="font-bold text-sm text-slate-900">PANITIA PILKETOS</span>
         </div>
         <button
@@ -99,9 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="space-y-8">
           {/* Brand header */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white font-mono font-black text-sm shadow">
-              4SK
-            </div>
+            <SchoolLogo className="w-10 h-10 object-contain drop-shadow-sm flex-shrink-0" size={40} />
             <div>
               <h2 className="font-extrabold text-sm text-slate-900 tracking-tight">
                 PANITIA PILKETOS

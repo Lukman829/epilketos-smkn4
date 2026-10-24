@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Shield, Lock, User, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react';
+import SchoolLogo from '@/components/common/SchoolLogo';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -65,10 +66,8 @@ export default function AdminLoginPage() {
 
         {/* Brand Header */}
         <div className="text-center space-y-3">
-          <div className="mx-auto w-16 h-16 rounded-3xl bg-white border border-slate-200 shadow-md flex items-center justify-center">
-            <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white">
-              <Shield className="w-6 h-6 text-blue-400" />
-            </div>
+          <div className="mx-auto w-20 h-20 rounded-3xl bg-white border border-slate-200 shadow-md flex items-center justify-center p-2">
+            <SchoolLogo className="w-16 h-16 object-contain" size={64} />
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">

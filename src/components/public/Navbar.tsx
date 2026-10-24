@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, Shield, Vote } from 'lucide-react';
 import { ElectionStatus } from '@/types/election';
+import SchoolLogo from '@/components/common/SchoolLogo';
 
 interface NavbarProps {
   status?: ElectionStatus;
@@ -53,13 +54,8 @@ export default function Navbar({ status = 'ongoing' }: NavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Brand Logo & School Seal */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-slate-900 to-blue-900 p-0.5 shadow-md group-hover:scale-105 transition-transform">
-            <div className="w-full h-full rounded-[10px] bg-slate-950 flex items-center justify-center text-white font-mono font-bold text-sm tracking-wider">
-              <span className="text-blue-400">4</span>SK
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-[9px] text-white font-bold">
-              ★
-            </div>
+          <div className="relative w-11 h-11 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <SchoolLogo className="w-11 h-11 object-contain drop-shadow-sm" size={44} />
           </div>
           <div>
             <div className="flex items-center gap-2">

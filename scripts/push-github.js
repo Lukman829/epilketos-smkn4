@@ -8,14 +8,23 @@ const owner = 'Lukman829';
 const repo = 'epilketos-smkn4';
 
 const EXCLUDE_DIRS = new Set(['node_modules', '.next', '.git', '.gemini', 'coverage']);
-const EXCLUDE_FILES = new Set(['.env.local']);
+const EXCLUDE_FILES = new Set([
+  '.env.local',
+  'public/logo-smkn4.jpg',
+  'public/logo-smkn4.png',
+  'public/logo-smkn4.jpeg',
+  'public/logo-sekolah.png',
+  'public/logo-sekolah.jpg',
+]);
 
 function scan(dir, base = '') {
   let list = [];
   for (const item of fs.readdirSync(dir)) {
     if (EXCLUDE_DIRS.has(item) || EXCLUDE_FILES.has(item)) continue;
+    if (item.startsWith('logo-smkn4') || item.startsWith('logo-sekolah')) continue;
     const full = path.join(dir, item);
     const rel = (base ? base + '/' + item : item).replace(/\\/g, '/');
+    if (EXCLUDE_FILES.has(rel)) continue;
     const s = fs.statSync(full);
     if (s.isDirectory()) {
       list = list.concat(scan(full, rel));
