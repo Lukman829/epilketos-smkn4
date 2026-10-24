@@ -134,7 +134,7 @@ async function main() {
 
   // 5. Create commit
   console.log('Creating commit...');
-  const commitMsg = 'fix: remove class participation breakdown from official public results';
+  const commitMsg = 'feat: purge all simulation and mock demo features from public results';
   const commitPayload = {
     message: commitMsg,
     tree: newTreeSha,

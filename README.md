@@ -77,8 +77,7 @@ flowchart TD
    - Layar sukses *"SUARAMU TELAH TERCATAT"* tanpa membocorkan pilihan pada bukti.
 5. **Halaman Hasil Resmi**:
    - Sebelum diterbitkan: Menampilkan pesan resmi bahwa hasil belum dibuka ke publik.
-   - Setelah diterbitkan admin: Grafik perolehan suara live, persentase, total pemilih, dan partisipasi per kelas.
-   - Mode Simulasi Visual (DEMO): Dilengkapi penanda jelas bahwa data adalah demonstrasi grafis.
+   - Setelah diterbitkan admin: Grafik perolehan suara live, persentase resmi, dan total pemilih sah terverifikasi.
 
 ### B. Portal Administrasi Panitia (`/admin`)
 Hanya 2 akun terotorisasi:
@@ -88,7 +87,7 @@ Hanya 2 akun terotorisasi:
 Fitur Panel:
 - **Ikhtisar Dashboard**: Metrik token diterbitkan, dipakai, sisa, dibatalkan, total surat suara, dan turnout per kelas.
 - **Manajemen Kandidat**: Tambah, ubah foto, visi, misi, program kerja, dan urutan nomor urut kandidat.
-- **Manajemen Kelas & Kuota**: 20 kelas rombel SMKN 4 Kota Serang (X & XI PPLG, TJKT, DKV, TKRO, TBSM, MPLB, BDP) dengan fitur impor spreadsheet (.xlsx/.csv).
+- **Manajemen Kelas & Kuota**: 30 rombel SMKN 4 Kota Serang (8 jurusan: TKJ, TSM, TKRO, TBSM, MPLB, AK, TEI, TITL @ 36 siswa/rombel = 1.080 pemilih) dengan fitur impor spreadsheet (.xlsx/.csv).
 - **Generator Token Kriptografis**: Membuat token batch per alokasi kelas (format `PLK-XXXX-YYYY`), pembatalan (*revoke*) dengan alasan resmi, penerbitan token pengganti, ekspor Excel, dan cetak lembar gunting kartu.
 - **Kontrol Pemilihan & Publikasi**: Buka/tutup voting secara manual, publikasi/tarik hasil dengan dialog konfirmasi aman.
 - **Audit Trail Keamanan**: Log seluruh aktivitas administratif tanpa mencatat pilihan pemilih.
@@ -125,14 +124,14 @@ npm run dev
 
 Buka peramban di:
 - **Halaman Publik**: [http://localhost:3000](http://localhost:3000)
-- **Bilik Suara**: [http://localhost:3000/vote](http://localhost:3000/vote) (Gunakan token uji cepat: `PLK-DEMO-2026`)
+- **Bilik Suara**: [http://localhost:3000/vote](http://localhost:3000/vote)
 - **Portal Admin**: [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
 
 ### Menjalankan Pengujian Otomatis
 ```bash
 npm test
 ```
-Seluruh 22 pengujian integritas (kriptografi token, atomisitas suara, pencegahan voting ganda, kerahasiaan suara, dan kontrol status) akan dijalankan secara otomatis.
+Seluruh 43 pengujian integritas (kriptografi token, atomisitas suara, pencegahan voting ganda, kerahasiaan suara, audit keamanan HMAC, rate limiting, dan kontrol status) akan dijalankan secara otomatis.
 
 ---
 

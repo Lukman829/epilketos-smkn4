@@ -10,30 +10,25 @@ import {
   Lock,
   CheckCircle2,
   Calendar,
-  Sparkles,
   ArrowRight,
   TrendingUp,
   Users,
   Award,
   Vote,
   Printer,
-  AlertCircle,
 } from 'lucide-react';
 
 export default function ResultsPage() {
   const [data, setData] = useState<ElectionResultsData | null>(null);
-  const [isDemo, setIsDemo] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const fetchResults = async (demo = false) => {
+  const fetchResults = async () => {
     setIsLoading(true);
     try {
-      const url = demo ? '/api/results?demo=true' : '/api/results';
-      const res = await fetch(url);
+      const res = await fetch('/api/results');
       const json = await res.json();
       if (json.success) {
         setData(json.results);
-        setIsDemo(json.is_demo || false);
       }
     } catch (err) {
       console.error('Failed loading results', err);
@@ -43,7 +38,7 @@ export default function ResultsPage() {
   };
 
   useEffect(() => {
-    fetchResults(false);
+    fetchResults();
   }, []);
 
   const isPublished = data?.is_published;
@@ -68,32 +63,7 @@ export default function ResultsPage() {
             <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
               SMKN 4 Kota Serang &bull; Transparansi Demokrasi Berkeadilan
             </p>
-
-            {/* Demo mode switcher for evaluation */}
-            <div className="pt-2 flex items-center justify-center gap-3">
-              <button
-                onClick={() => fetchResults(!isDemo)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 ${
-                  isDemo
-                    ? 'bg-amber-100 text-amber-900 border-amber-300'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                <span>{isDemo ? 'Kembalikan ke Data Asli' : 'Simulasikan Visual Grafis (Mode DEMO)'}</span>
-              </button>
-            </div>
           </div>
-
-          {/* DEMO NOTICE BANNER (Mandatory when demo mode is active) */}
-          {isDemo && (
-            <div className="p-4 rounded-2xl bg-amber-500 text-slate-950 font-bold text-xs sm:text-sm text-center shadow-lg border border-amber-600 flex items-center justify-center gap-2">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span>
-                MODE DEMO AKTIF: Data di bawah adalah simulasi grafis demonstrasi untuk tujuan pengujian visual dan BUKAN merupakan hasil resmi pemilihan.
-              </span>
-            </div>
-          )}
 
           {/* =========================================================================
               SCENARIO A: BEFORE OFFICIAL PUBLICATION (LOCKED STATE)
@@ -139,12 +109,6 @@ export default function ResultsPage() {
                   <Vote className="w-4 h-4" />
                   <span>Masuk Bilik Suara</span>
                 </Link>
-                <button
-                  onClick={() => fetchResults(true)}
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors"
-                >
-                  Lihat Pratinjau Tampilan Grafik (Demo)
-                </button>
               </div>
             </div>
           )}
