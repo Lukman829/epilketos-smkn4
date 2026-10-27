@@ -48,7 +48,7 @@ function getLogoBytes(): Uint8Array | null {
   }
 }
 
-export function generateClassDocx(params: ClassDocxExportParams): any {
+export function generateClassDocx(params: ClassDocxExportParams): Document {
   const {
     className,
     tokens,
@@ -65,7 +65,7 @@ export function generateClassDocx(params: ClassDocxExportParams): any {
   const safeTeacher = homeroomTeacher.trim() ? homeroomTeacher.trim() : '...........................................';
 
   // Build Kop Surat row
-  const kopChildren: any[] = [];
+  const kopChildren: TableCell[] = [];
   if (logoBytes) {
     kopChildren.push(
       new TableCell({
@@ -549,7 +549,33 @@ export function generateClassDocx(params: ClassDocxExportParams): any {
               new TableRow({
                 children: [
                   new TableCell({
-                    width: { size: 50, type: WidthType.PERCENTAGE },
+                    width: { size: 33, type: WidthType.PERCENTAGE },
+                    borders: {
+                      top: { style: BorderStyle.NONE },
+                      bottom: { style: BorderStyle.NONE },
+                      left: { style: BorderStyle.NONE },
+                      right: { style: BorderStyle.NONE },
+                    },
+                    children: [
+                      new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        spacing: { line: 240 },
+                        children: [
+                          new TextRun({ text: 'Wali Kelas,\n', size: 17, font: 'Arial' }),
+                          new TextRun({ text: className, bold: true, size: 17, font: 'Arial' }),
+                        ],
+                      }),
+                      new Paragraph({ spacing: { before: 800 } }),
+                      new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        children: [
+                          new TextRun({ text: `( ${safeTeacher} )`, bold: true, size: 17, font: 'Arial' }),
+                        ],
+                      }),
+                    ],
+                  }),
+                  new TableCell({
+                    width: { size: 33, type: WidthType.PERCENTAGE },
                     borders: {
                       top: { style: BorderStyle.NONE },
                       bottom: { style: BorderStyle.NONE },
@@ -562,20 +588,20 @@ export function generateClassDocx(params: ClassDocxExportParams): any {
                         spacing: { line: 240 },
                         children: [
                           new TextRun({ text: 'Mengetahui,\n', size: 17, font: 'Arial' }),
-                          new TextRun({ text: 'Pembina OSIS SMKN 4 Kota Serang', bold: true, size: 17, font: 'Arial' }),
+                          new TextRun({ text: 'Pembina OSIS SMKN 4', bold: true, size: 17, font: 'Arial' }),
                         ],
                       }),
-                      new Paragraph({ spacing: { before: 900 } }),
+                      new Paragraph({ spacing: { before: 800 } }),
                       new Paragraph({
                         alignment: AlignmentType.CENTER,
                         children: [
-                          new TextRun({ text: '(                                                      )', bold: true, size: 17, font: 'Arial' }),
+                          new TextRun({ text: '(                                          )', bold: true, size: 17, font: 'Arial' }),
                         ],
                       }),
                     ],
                   }),
                   new TableCell({
-                    width: { size: 50, type: WidthType.PERCENTAGE },
+                    width: { size: 34, type: WidthType.PERCENTAGE },
                     borders: {
                       top: { style: BorderStyle.NONE },
                       bottom: { style: BorderStyle.NONE },
@@ -588,14 +614,14 @@ export function generateClassDocx(params: ClassDocxExportParams): any {
                         spacing: { line: 240 },
                         children: [
                           new TextRun({ text: 'Panitia Pelaksana,\n', size: 17, font: 'Arial' }),
-                          new TextRun({ text: 'Ketua Komisi Pemilihan OSIS', bold: true, size: 17, font: 'Arial' }),
+                          new TextRun({ text: 'Ketua Komisi Pemilihan', bold: true, size: 17, font: 'Arial' }),
                         ],
                       }),
-                      new Paragraph({ spacing: { before: 900 } }),
+                      new Paragraph({ spacing: { before: 800 } }),
                       new Paragraph({
                         alignment: AlignmentType.CENTER,
                         children: [
-                          new TextRun({ text: '(                                                      )', bold: true, size: 17, font: 'Arial' }),
+                          new TextRun({ text: '(                                          )', bold: true, size: 17, font: 'Arial' }),
                         ],
                       }),
                     ],
