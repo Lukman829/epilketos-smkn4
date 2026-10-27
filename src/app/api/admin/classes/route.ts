@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminFromRequest, sanitizeString } from '@/lib/security';
 import { getAllClasses, adminSaveClass } from '@/lib/storage';
+import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,6 +13,19 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // 1. Fetch from Supabase PostgreSQL if configured
+    if (isSupabaseConfigured && supabaseAdmin) {
+      const { data, error } = await supabaseAdmin
+        .from('classes')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return NextResponse.json({ success: true, classes: data });
+      }
+    }
+
+    // 2. Fallback to local in-memory store
     const classes = getAllClasses();
     return NextResponse.json({ success: true, classes });
   } catch (err: unknown) {
@@ -49,11 +63,27 @@ export async function POST(req: NextRequest) {
 
     const sanitizedClass = {
       ...body,
+      id: sanitizeString(String(body.id || `cls-${Date.now()}`), 50),
+      grade: String(body.grade || '10').trim(),
+      major: sanitizeString(String(body.major || 'UMUM'), 20),
       name: sanitizeString(String(body.name), 50),
       voter_quota: quota,
     };
 
     const saved = adminSaveClass(sanitizedClass, admin.name);
+
+    // Persist to Supabase PostgreSQL if configured
+    if (isSupabaseConfigured && supabaseAdmin) {
+      await supabaseAdmin.from('classes').upsert({
+        id: saved.id,
+        grade: saved.grade,
+        major: saved.major,
+        name: saved.name,
+        voter_quota: saved.voter_quota,
+        updated_at: new Date().toISOString(),
+      });
+    }
+
     return NextResponse.json({ success: true, class: saved });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Gagal menyimpan kelas';

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/security';
+import { ClassRecord } from '@/types/election';
 import {
   getPublicElectionSettings,
   getAllTokens,
@@ -30,13 +31,13 @@ export async function GET(req: NextRequest) {
       const { data: supaAudit } = await supabase.rpc('admin_get_audit_logs', { p_limit: 15 });
 
       if (supaRes && Array.isArray(supaClasses)) {
-        const classStats = supaClasses.map((c: any) => ({
-          id: c.id,
-          name: c.name,
-          quota: c.voter_quota,
+        const classStats = supaClasses.map((c: Partial<ClassRecord>) => ({
+          id: c.id || '',
+          name: c.name || '',
+          quota: c.voter_quota || 0,
           tokens_generated: c.tokens_generated || 0,
           voted_count: c.voted_count || 0,
-          turnout_percentage: c.voter_quota > 0 ? Math.round(((c.voted_count || 0) / c.voter_quota) * 100) : 0,
+          turnout_percentage: (c.voter_quota || 0) > 0 ? Math.round(((c.voted_count || 0) / (c.voter_quota || 1)) * 100) : 0,
         }));
 
         return NextResponse.json({

@@ -1,26 +1,33 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CinematicIntro() {
   const [visible, setVisible] = useState<boolean>(false);
 
-  useEffect(() => {
-    const hasSeen = sessionStorage.getItem('epilketos_intro_seen');
-    if (!hasSeen) {
-      setVisible(true);
-      const timer = setTimeout(() => {
-        handleDismiss();
-      }, 2000); // 2 seconds gentle intro
-      return () => clearTimeout(timer);
+  const handleDismiss = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('epilketos_intro_seen', 'true');
+      } catch {}
     }
+    setVisible(false);
   }, []);
 
-  const handleDismiss = () => {
-    sessionStorage.setItem('epilketos_intro_seen', 'true');
-    setVisible(false);
-  };
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const hasSeen = sessionStorage.getItem('epilketos_intro_seen');
+      if (!hasSeen) {
+        setVisible(true);
+        const timer = setTimeout(() => {
+          handleDismiss();
+        }, 2000); // 2 seconds gentle intro
+        return () => clearTimeout(timer);
+      }
+    } catch {}
+  }, [handleDismiss]);
 
   return (
     <AnimatePresence>
