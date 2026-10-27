@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import Navbar from '@/components/public/Navbar';
 import Footer from '@/components/public/Footer';
 import { Candidate, ElectionSettings } from '@/types/election';
+import { INITIAL_CANDIDATES, DEFAULT_ELECTION_SETTINGS } from '@/lib/constants';
 import {
   KeyRound,
   CheckCircle2,
@@ -19,15 +20,20 @@ import {
   HelpCircle,
   Home,
   RotateCcw,
+  Monitor,
 } from 'lucide-react';
 
 type VoteStep = 'token' | 'select_ketua' | 'select_wakil' | 'summary' | 'success';
 
 export default function VotePage() {
   const [step, setStep] = useState<VoteStep>('token');
-  const [settings, setSettings] = useState<ElectionSettings | null>(null);
-  const [ketuaCandidates, setKetuaCandidates] = useState<Candidate[]>([]);
-  const [wakilCandidates, setWakilCandidates] = useState<Candidate[]>([]);
+  const [settings, setSettings] = useState<ElectionSettings>(DEFAULT_ELECTION_SETTINGS);
+  const [ketuaCandidates, setKetuaCandidates] = useState<Candidate[]>(() =>
+    INITIAL_CANDIDATES.filter((c) => c.type === 'ketua')
+  );
+  const [wakilCandidates, setWakilCandidates] = useState<Candidate[]>(() =>
+    INITIAL_CANDIDATES.filter((c) => c.type === 'wakil')
+  );
 
   // Voting inputs & state
   const [tokenInput, setTokenInput] = useState<string>('');
@@ -41,6 +47,61 @@ export default function VotePage() {
   const [isSubmittingVote, setIsSubmittingVote] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successTimestamp, setSuccessTimestamp] = useState<string | null>(null);
+
+  // Kiosk / Booth Attendant Mode
+  const [isKioskMode, setIsKioskMode] = useState<boolean>(false);
+  const [kioskCountdown, setKioskCountdown] = useState<number>(5);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('epilketos_kiosk_mode');
+      const urlParams = new URLSearchParams(window.location.search);
+      if (saved === '1' || urlParams.get('kiosk') === '1') {
+        setIsKioskMode(true);
+      }
+    }
+  }, []);
+
+  const toggleKioskMode = () => {
+    setIsKioskMode((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('epilketos_kiosk_mode', next ? '1' : '0');
+      }
+      return next;
+    });
+  };
+
+  const handleResetKiosk = useCallback(() => {
+    setStep('token');
+    setTokenInput('');
+    setVerifiedToken('');
+    setVoterClassName('');
+    setSelectedKetua(null);
+    setSelectedWakil(null);
+    setErrorMessage(null);
+    setSuccessTimestamp(null);
+    setKioskCountdown(5);
+  }, []);
+
+  // Countdown timer for automatic reset in kiosk mode
+  useEffect(() => {
+    if (step !== 'success' || !isKioskMode) return;
+
+    setKioskCountdown(5);
+    const timer = setInterval(() => {
+      setKioskCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleResetKiosk();
+          return 5;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [step, isKioskMode, handleResetKiosk]);
 
   // Load candidates and election settings
   useEffect(() => {
@@ -166,6 +227,27 @@ export default function VotePage() {
 
       <main className="flex-grow py-8 sm:py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
+          {/* Top Bar: Booth Attendant Controls / Kiosk Mode */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+            <span className="text-slate-500 font-mono text-[11px]">
+              Platform Pemilihan Suara Siswa SMKN 4 Kota Serang
+            </span>
+
+            <button
+              type="button"
+              onClick={toggleKioskMode}
+              className={`self-start sm:self-auto px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all border ${
+                isKioskMode
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                  : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900'
+              }`}
+              title="Aktifkan untuk komputer/HP bilik suara: layar otomatis reset setelah suara pemilih sah tercatat"
+            >
+              <Monitor className="w-3.5 h-3.5" />
+              <span>{isKioskMode ? 'Mode Bilik Mandiri: Aktif' : 'Mode Bilik Mandiri'}</span>
+            </button>
+          </div>
+
           {/* Progress Stepper Bar (Hidden during success) */}
           {step !== 'success' && (
             <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
@@ -656,21 +738,44 @@ export default function VotePage() {
                 </div>
               </div>
 
+              {/* Kiosk Mode Auto-Reset Banner */}
+              {isKioskMode && (
+                <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 space-y-2">
+                  <div className="flex items-center justify-center gap-2 font-bold text-xs">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping" />
+                    <span>Mode Bilik Mandiri Aktif</span>
+                  </div>
+                  <p className="text-xs text-blue-700">
+                    Layar akan otomatis di-reset untuk pemilih berikutnya dalam{' '}
+                    <strong className="font-mono text-sm text-blue-950 font-black">{kioskCountdown}</strong> detik...
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResetKiosk}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors shadow-xs"
+                  >
+                    Reset Sekarang (Pemilih Berikutnya)
+                  </button>
+                </div>
+              )}
+
               {/* Navigation CTA */}
               <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleResetKiosk}
+                  className="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-md shadow-blue-500/20"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Pemilih Berikutnya (Reset Form)</span>
+                </button>
+
                 <Link
                   href="/"
                   className="w-full py-3.5 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2"
                 >
                   <Home className="w-4 h-4" />
                   <span>Kembali ke Beranda Utama</span>
-                </Link>
-
-                <Link
-                  href="/hasil"
-                  className="w-full py-3.5 px-6 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-colors flex items-center justify-center gap-2"
-                >
-                  <span>Lihat Jadwal Pengumuman</span>
                 </Link>
               </div>
             </div>

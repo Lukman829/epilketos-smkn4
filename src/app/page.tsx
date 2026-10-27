@@ -10,6 +10,7 @@ import CandidateCard from '@/components/public/CandidateCard';
 import CandidateDetailModal from '@/components/public/CandidateDetailModal';
 import SchoolLogo from '@/components/common/SchoolLogo';
 import { Candidate, ElectionSettings } from '@/types/election';
+import { INITIAL_CANDIDATES, DEFAULT_ELECTION_SETTINGS } from '@/lib/constants';
 import {
   Vote,
   Users,
@@ -24,12 +25,15 @@ import {
 } from 'lucide-react';
 
 export default function HomePage() {
-  const [settings, setSettings] = useState<ElectionSettings | null>(null);
-  const [ketuaCandidates, setKetuaCandidates] = useState<Candidate[]>([]);
-  const [wakilCandidates, setWakilCandidates] = useState<Candidate[]>([]);
+  const [settings, setSettings] = useState<ElectionSettings>(DEFAULT_ELECTION_SETTINGS);
+  const [ketuaCandidates, setKetuaCandidates] = useState<Candidate[]>(() =>
+    INITIAL_CANDIDATES.filter((c) => c.type === 'ketua')
+  );
+  const [wakilCandidates, setWakilCandidates] = useState<Candidate[]>(() =>
+    INITIAL_CANDIDATES.filter((c) => c.type === 'wakil')
+  );
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [activeTab, setActiveTab] = useState<'ketua' | 'wakil'>('ketua');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function loadData() {
@@ -42,17 +46,15 @@ export default function HomePage() {
         const settingsData = await settingsRes.json();
         const candidatesData = await candidatesRes.json();
 
-        if (settingsData.success) {
+        if (settingsData.success && settingsData.settings) {
           setSettings(settingsData.settings);
         }
-        if (candidatesData.success) {
-          setKetuaCandidates(candidatesData.ketua || []);
+        if (candidatesData.success && Array.isArray(candidatesData.ketua) && candidatesData.ketua.length > 0) {
+          setKetuaCandidates(candidatesData.ketua);
           setWakilCandidates(candidatesData.wakil || []);
         }
       } catch (err) {
-        console.error('Failed loading election home data', err);
-      } finally {
-        setIsLoading(false);
+        console.warn('Syncing election home data with backend:', err);
       }
     }
 

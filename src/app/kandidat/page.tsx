@@ -6,48 +6,58 @@ import Footer from '@/components/public/Footer';
 import CandidateCard from '@/components/public/CandidateCard';
 import CandidateDetailModal from '@/components/public/CandidateDetailModal';
 import { Candidate, ElectionSettings } from '@/types/election';
-import { Sparkles, Users, Award, Compass, ArrowRight, Vote } from 'lucide-react';
+import { INITIAL_CANDIDATES, DEFAULT_ELECTION_SETTINGS } from '@/lib/constants';
+import { Users, Vote, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CandidatesPage() {
-  const [ketuaCandidates, setKetuaCandidates] = useState<Candidate[]>([]);
-  const [wakilCandidates, setWakilCandidates] = useState<Candidate[]>([]);
+  // Pre-seed with official candidates so SSR/SSG prerender never emits an empty '0 kandidat' shell
+  const [ketuaCandidates, setKetuaCandidates] = useState<Candidate[]>(() =>
+    INITIAL_CANDIDATES.filter((c) => c.type === 'ketua')
+  );
+  const [wakilCandidates, setWakilCandidates] = useState<Candidate[]>(() =>
+    INITIAL_CANDIDATES.filter((c) => c.type === 'wakil')
+  );
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'ketua' | 'wakil'>('all');
-  const [settings, setSettings] = useState<ElectionSettings | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [settings, setSettings] = useState<ElectionSettings>(DEFAULT_ELECTION_SETTINGS);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const syncCandidates = async () => {
+    setIsSyncing(true);
+    setFetchError(null);
+    try {
+      const [candRes, setRes] = await Promise.all([
+        fetch('/api/candidates'),
+        fetch('/api/settings'),
+      ]);
+
+      const candData = await candRes.json();
+      const setData = await setRes.json();
+
+      if (candData.success && Array.isArray(candData.ketua) && candData.ketua.length > 0) {
+        setKetuaCandidates(candData.ketua);
+        setWakilCandidates(candData.wakil || []);
+      }
+      if (setData.success && setData.settings) {
+        setSettings(setData.settings);
+      }
+    } catch (err) {
+      console.warn('Syncing candidates with backend failed; using preloaded data:', err);
+      setFetchError('Koneksi sinkronisasi latar belakang terganggu.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchCandidates() {
-      try {
-        const [candRes, setRes] = await Promise.all([
-          fetch('/api/candidates'),
-          fetch('/api/settings'),
-        ]);
-
-        const candData = await candRes.json();
-        const setData = await setRes.json();
-
-        if (candData.success) {
-          setKetuaCandidates(candData.ketua || []);
-          setWakilCandidates(candData.wakil || []);
-        }
-        if (setData.success) {
-          setSettings(setData.settings);
-        }
-      } catch (err) {
-        console.error('Failed loading candidates', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchCandidates();
+    syncCandidates();
   }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900">
-      <Navbar status={settings?.status || 'ongoing'} />
+      <Navbar status={settings.status || 'ongoing'} />
 
       <main className="flex-grow py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
@@ -56,15 +66,30 @@ export default function CandidatesPage() {
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-mono font-bold uppercase tracking-wider">
               <Users className="w-3.5 h-3.5" />
               <span>KANDIDAT RESMI OSIS 2026/2027</span>
+              {isSyncing && (
+                <RefreshCw className="w-3 h-3 text-blue-500 animate-spin ml-1" />
+              )}
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
-              Kandidat Ketua & Wakil Ketua OSIS
+              Kandidat Ketua &amp; Wakil Ketua OSIS
             </h1>
 
             <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
               Pelajari rekam jejak, visi, misi, dan program unggulan dari 3 Calon Ketua OSIS dan 6 Calon Wakil Ketua OSIS SMKN 4 Kota Serang sebelum menggunakan hak pilih Anda di bilik suara.
             </p>
+
+            {fetchError && (
+              <div className="inline-flex items-center gap-2 text-xs text-amber-700 bg-amber-50 px-3 py-1 rounded-lg border border-amber-200">
+                <span>{fetchError} (Menampilkan data terverifikasi)</span>
+                <button
+                  onClick={syncCandidates}
+                  className="font-bold underline hover:text-amber-900 ml-1"
+                >
+                  Coba lagi
+                </button>
+              </div>
+            )}
 
             {/* Filter Toggle */}
             <div className="pt-2 flex items-center justify-center">
