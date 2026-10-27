@@ -45,6 +45,8 @@ export default function AdminAnnouncementsPage() {
 
   // Tab state: 'letter' | 'excel' | 'broadcast' (Default: 'letter' for pristine formatted document)
   const [activeTab, setActiveTab] = useState<'letter' | 'excel' | 'broadcast'>('letter');
+  const [broadcastFormat, setBroadcastFormat] = useState<'distribution' | 'announcement' | 'compact'>('distribution');
+  const [classFilter, setClassFilter] = useState<string>('all');
   const [copiedBroadcast, setCopiedBroadcast] = useState(false);
   const [copiedTokenId, setCopiedTokenId] = useState<string | null>(null);
   const [tokenSearch, setTokenSearch] = useState('');
@@ -180,8 +182,64 @@ export default function AdminAnnouncementsPage() {
     }
   };
 
-  // Broadcast Message Template
-  const broadcastText = useMemo(() => {
+  // Filtered classes list based on tab/dropdown filter
+  const filteredClassList = useMemo(() => {
+    if (classFilter === 'all') return classes;
+    if (classFilter === '10') return classes.filter((c) => c.grade === '10' || c.name.startsWith('X '));
+    if (classFilter === '11') return classes.filter((c) => c.grade === '11' || c.name.startsWith('XI '));
+    return classes.filter((c) => c.name.toUpperCase().includes(classFilter.toUpperCase()));
+  }, [classes, classFilter]);
+
+  // 1. Template Distribusi Walas Lengkap (Disesuaikan otomatis tergantung jumlah siswa / token, format nomor absen tanpa nama)
+  const broadcastTokensDistribution = useMemo(() => {
+    const className = currentClass ? currentClass.name : 'Kelas';
+    const teacherDisplay = homeroomTeacher.trim() ? homeroomTeacher.trim() : 'Bapak/Ibu Wali Kelas';
+    const totalCount = tokens.length;
+
+    let tokenRows = '';
+    if (tokens.length === 0) {
+      tokenRows = '(Belum ada token diterbitkan untuk kelas ini. Silakan terbitkan token pada formulir di atas)';
+    } else {
+      tokenRows = tokens
+        .map((t, idx) => {
+          const plainToken = t.plain && !t.plain.includes('*') ? t.plain : t.preview || t.id;
+          const absenNo = String(idx + 1).padStart(2, '0');
+          return `[Absen ${absenNo}] Token: ${plainToken}`;
+        })
+        .join('\n');
+    }
+
+    return (
+`*DAFTAR DISTRIBUSI TOKEN PEMILIHAN OSIS*
+*SMK NEGERI 4 KOTA SERANG — MASA BAKTI 2026/2027*
+
+📋 *INFORMASI KELAS & JADWAL PELAKSANAAN:*
+• Kelas: *${className}*
+• Wali Kelas / Pendamping: *${teacherDisplay}*
+• Jumlah Alokasi DPT: *${totalCount} Siswa*
+• Hari, Tanggal: ${electionDate}
+• Waktu Pelaksanaan: ${electionTime}
+• Alamat Bilik Suara Digital: ${voteUrl}
+
+🔐 *DAFTAR KODE TOKEN PEMILIHAN PER NOMOR ABSEN:*
+(Mohon dibagikan kepada peserta didik sesuai nomor urut absen masing-masing):
+--------------------------------------------------
+${tokenRows}
+--------------------------------------------------
+
+📌 *PANDUAN PEMILIH:*
+1. Akses portal bilik suara resmi: ${voteUrl}
+2. Masukkan kode token pemilihan sesuai nomor urut absen di atas.
+3. Tentukan pilihan 1 (satu) Calon Ketua dan 1 (satu) Calon Wakil Ketua OSIS.
+4. Klik tombol "Kirim Suara Sah" hingga bukti verifikasi suara berhasil ditampilkan.
+5. Ketentuan: 1 (satu) token hanya berlaku untuk 1 kali pakai dan langsung terkunci.
+
+Komisi Pemilihan OSIS SMK Negeri 4 Kota Serang`
+    );
+  }, [currentClass, homeroomTeacher, tokens, electionDate, electionTime, voteUrl]);
+
+  // 2. Format Surat Pemberitahuan Umum (Tanpa daftar token, hanya jadwal & panduan)
+  const broadcastAnnouncement = useMemo(() => {
     const className = currentClass ? currentClass.name : 'Kelas';
     const teacherSalutation = homeroomTeacher.trim()
       ? `Bapak/Ibu ${homeroomTeacher.trim()}`
@@ -204,7 +262,7 @@ ${voteUrl}
 
 TATA CARA PENGGUNAAN HAK SUARA:
 1. Akses alamat bilik suara: ${voteUrl}
-2. Masukkan Kode Token Pemilihan resmi yang tertera pada daftar distribusi kelas.
+2. Masukkan Kode Token Pemilihan resmi yang dibagikan oleh Wali Kelas sesuai nomor absen.
 3. Tentukan pilihan 1 Calon Ketua dan 1 Calon Wakil Ketua OSIS.
 4. Periksa ringkasan pilihan dan selesaikan pengiriman suara.
 
@@ -217,16 +275,37 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
     );
   }, [currentClass, homeroomTeacher, electionDate, electionTime, electionVenue, voteUrl, specialNotes]);
 
+  // 3. Format Ringkas (Nomor Absen : Kode Token Saja)
+  const broadcastCompactList = useMemo(() => {
+    const className = currentClass ? currentClass.name : 'Kelas';
+    if (tokens.length === 0) return '(Belum ada token)';
+    const lines = tokens
+      .map((t, idx) => {
+        const plainToken = t.plain && !t.plain.includes('*') ? t.plain : t.preview || t.id;
+        const absenNo = String(idx + 1).padStart(2, '0');
+        return `Absen ${absenNo}: ${plainToken}`;
+      })
+      .join('\n');
+    return `*TOKEN PEMILIHAN ${className} (${tokens.length} SISWA)*\nAlamat: ${voteUrl}\n\n${lines}`;
+  }, [currentClass, tokens, voteUrl]);
+
+  // Active broadcast text depending on user selected format
+  const activeBroadcastText = useMemo(() => {
+    if (broadcastFormat === 'distribution') return broadcastTokensDistribution;
+    if (broadcastFormat === 'compact') return broadcastCompactList;
+    return broadcastAnnouncement;
+  }, [broadcastFormat, broadcastTokensDistribution, broadcastCompactList, broadcastAnnouncement]);
+
   // Copy Broadcast Text
   const handleCopyBroadcast = () => {
-    navigator.clipboard.writeText(broadcastText);
+    navigator.clipboard.writeText(activeBroadcastText);
     setCopiedBroadcast(true);
     setTimeout(() => setCopiedBroadcast(false), 2500);
   };
 
   // Open Direct WhatsApp Share
   const handleShareWhatsApp = () => {
-    const encoded = encodeURIComponent(broadcastText);
+    const encoded = encodeURIComponent(activeBroadcastText);
     window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
   };
 
@@ -352,18 +431,42 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Required Field 1: Nama Kelas */}
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-slate-900 flex items-center justify-between">
-                <span>Nama Kelas <span className="text-rose-600 font-bold">* (Wajib)</span></span>
-                <span className="text-[11px] font-normal text-slate-400">Pilih dari 30 Rombel</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black text-slate-900">
+                  Nama Kelas <span className="text-rose-600 font-bold">* (Wajib)</span>
+                </label>
+                <div className="flex items-center gap-1 flex-wrap">
+                  {['all', '10', '11', 'TKJ', 'RPL'].map((f) => (
+                    <button
+                      type="button"
+                      key={f}
+                      onClick={() => setClassFilter(f)}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-all ${
+                        classFilter === f
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {f === 'all' ? 'Semua' : f === '10' ? 'Kls X' : f === '11' ? 'Kls XI' : f}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <select
                 required
                 value={selectedClassId}
-                onChange={(e) => setSelectedClassId(e.target.value)}
+                onChange={(e) => {
+                  const targetId = e.target.value;
+                  setSelectedClassId(targetId);
+                  const found = classes.find((c) => c.id === targetId);
+                  if (found?.voter_quota) {
+                    setVoterCount(found.voter_quota);
+                  }
+                }}
                 className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
               >
                 <option value="">-- Pilih Nama Kelas --</option>
-                {classes.map((cls) => (
+                {filteredClassList.map((cls) => (
                   <option key={cls.id} value={cls.id}>
                     {cls.name} ({cls.voter_quota} Siswa)
                   </option>
@@ -844,11 +947,14 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
             {/* TAB CONTENT: BROADCAST TEXT */}
             {activeTab === 'broadcast' && (
               <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                   <div>
-                    <h3 className="text-sm font-black text-slate-900">Format Teks Siaran Pemberitahuan</h3>
+                    <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                      <Send className="w-4 h-4 text-emerald-600" />
+                      <span>Format Pengumuman &amp; Teks Distribusi</span>
+                    </h3>
                     <p className="text-xs text-slate-500">
-                      Teks resmi untuk dibagikan ke grup wali kelas dan peserta didik
+                      Format pesan otomatis disesuaikan dengan {tokens.length} nomor absen (Absen 01 s/d {String(tokens.length).padStart(2, '0')}) tanpa nama siswa
                     </p>
                   </div>
 
@@ -871,8 +977,47 @@ Komisi Pemilihan OSIS SMKN 4 Kota Serang`
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 font-mono text-xs text-slate-800 whitespace-pre-wrap leading-relaxed">
-                  {broadcastText}
+                {/* Sub-Format Selector Pills */}
+                <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-slate-100 border border-slate-200/80">
+                  <button
+                    onClick={() => setBroadcastFormat('distribution')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      broadcastFormat === 'distribution'
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>📋 Format Distribusi Walas (Lengkap No. Absen &amp; Token)</span>
+                    <span className="px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                      Rekomendasi
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setBroadcastFormat('announcement')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      broadcastFormat === 'announcement'
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>📄 Pengumuman Umum (Jadwal &amp; Tautan)</span>
+                  </button>
+
+                  <button
+                    onClick={() => setBroadcastFormat('compact')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      broadcastFormat === 'compact'
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>🔢 Daftar Ringkas (Absen : Token Saja)</span>
+                  </button>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 font-mono text-xs text-slate-800 whitespace-pre-wrap leading-relaxed max-h-[500px] overflow-y-auto">
+                  {activeBroadcastText}
                 </div>
               </div>
             )}
