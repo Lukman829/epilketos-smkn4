@@ -7,16 +7,53 @@ import {
   recordFailedLogin,
   resetFailedLogin,
   rateLimit,
+  sanitizeString,
 } from '@/lib/security';
 import { recordAuditLog } from '@/lib/storage';
 
-// 1 Single Official Administrator Account for SMKN 4 Kota Serang
-const ADMIN_CONFIG = {
-  primaryUsername: process.env.ADMIN_USERNAME || 'admin',
-  primaryPassword: process.env.ADMIN_PASSWORD || 'PilketoSMKN4_Secure!',
-  name: 'Administrator Utama E-PILKETOS',
-  role: 'admin_utama',
-};
+interface AdminAccountConfig {
+  username: string;
+  aliases: string[];
+  password?: string;
+  name: string;
+  role: 'admin_utama' | 'ketua_panitia';
+}
+
+/**
+ * Load configured administrator accounts strictly from environment variables.
+ * NO static fallback passwords are used to guarantee production security.
+ */
+function getAdminAccounts(): AdminAccountConfig[] {
+  const accounts: AdminAccountConfig[] = [];
+
+  // 1. Administrator Utama
+  const utamaUser = process.env.ADMIN_UTAMA_USERNAME || process.env.ADMIN_USERNAME || 'admin.utama';
+  const utamaPass = process.env.ADMIN_UTAMA_PASSWORD || process.env.ADMIN_PASSWORD;
+  if (utamaPass && typeof utamaPass === 'string' && utamaPass.trim().length > 0) {
+    accounts.push({
+      username: utamaUser.trim(),
+      aliases: ['admin', 'admin.utama'],
+      password: utamaPass.trim(),
+      name: 'Administrator Utama E-PILKETOS',
+      role: 'admin_utama',
+    });
+  }
+
+  // 2. Ketua Panitia Pelaksana
+  const ketuaUser = process.env.ADMIN_KETUA_USERNAME || 'ketua.panitia';
+  const ketuaPass = process.env.ADMIN_KETUA_PASSWORD;
+  if (ketuaPass && typeof ketuaPass === 'string' && ketuaPass.trim().length > 0) {
+    accounts.push({
+      username: ketuaUser.trim(),
+      aliases: ['ketua.panitia', 'ketua'],
+      password: ketuaPass.trim(),
+      name: 'Ketua Panitia Pelaksana E-PILKETOS',
+      role: 'ketua_panitia',
+    });
+  }
+
+  return accounts;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -64,23 +101,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const cleanUsername = username.trim();
+    // Sanitize username against XSS and control characters
+    const cleanUsername = sanitizeString(username.trim(), 100);
     const cleanPassword = password.trim();
 
-    // 3. Constant-Time Authentication
-    // Support primary username ('admin') and alias ('admin.utama')
-    const usernameMatches =
-      constantTimeCompare(ADMIN_CONFIG.primaryUsername, cleanUsername) ||
-      constantTimeCompare('admin.utama', cleanUsername);
+    // 3. Constant-Time Multi-Account Authentication
+    const configuredAccounts = getAdminAccounts();
 
-    const passwordMatches =
-      constantTimeCompare(ADMIN_CONFIG.primaryPassword, cleanPassword) ||
-      constantTimeCompare('PilketoSMKN4_Secure!', cleanPassword);
+    let authenticatedAccount: AdminAccountConfig | null = null;
 
-    const isAuthenticated = usernameMatches && passwordMatches;
+    for (const account of configuredAccounts) {
+      if (!account.password) continue;
+
+      const usernameMatches =
+        constantTimeCompare(account.username, cleanUsername) ||
+        account.aliases.some((alias) => constantTimeCompare(alias, cleanUsername));
+
+      const passwordMatches = constantTimeCompare(account.password, cleanPassword);
+
+      if (usernameMatches && passwordMatches) {
+        authenticatedAccount = account;
+        break;
+      }
+    }
 
     // 4. Failed Authentication Branch (Per-IP Failure Tracking)
-    if (!isAuthenticated) {
+    if (!authenticatedAccount) {
       const ipRecord = recordFailedLogin(`ip:${clientIp}`, 5, 15 * 60 * 1000);
       const remainingAttempts = Math.max(0, 5 - ipRecord.attempts);
 
@@ -107,23 +153,22 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Successful Authentication Branch
-    // Reset IP failed attempt counter upon successful login
     resetFailedLogin(`ip:${clientIp}`);
 
     // Sign cryptographic session token (HMAC-SHA256, 2-hour lifespan with unique jti)
     const token = signAdminToken(
       {
-        username: cleanUsername,
-        name: ADMIN_CONFIG.name,
-        role: ADMIN_CONFIG.role,
+        username: authenticatedAccount.username,
+        name: authenticatedAccount.name,
+        role: authenticatedAccount.role,
       },
       2 * 3600 // 2 hours
     );
 
     // Record audit log for successful admin login
-    recordAuditLog('ADMIN_LOGIN_SUCCESS', ADMIN_CONFIG.name, {
-      username: cleanUsername,
-      role: ADMIN_CONFIG.role,
+    recordAuditLog('ADMIN_LOGIN_SUCCESS', authenticatedAccount.name, {
+      username: authenticatedAccount.username,
+      role: authenticatedAccount.role,
       ip: clientIp,
       timestamp: new Date().toISOString(),
     });
@@ -132,9 +177,9 @@ export async function POST(req: NextRequest) {
       success: true,
       token,
       admin: {
-        username: cleanUsername,
-        name: ADMIN_CONFIG.name,
-        role: ADMIN_CONFIG.role,
+        username: authenticatedAccount.username,
+        name: authenticatedAccount.name,
+        role: authenticatedAccount.role,
       },
     });
 

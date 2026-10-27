@@ -214,7 +214,7 @@ const failedLoginStore = new Map<string, FailedLoginRecord>();
 
 // Periodic garbage collection every 5 minutes
 if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
+  const gcTimer = setInterval(() => {
     const now = Date.now();
     for (const [key, record] of rateLimitStore.entries()) {
       if (now > record.resetAt) {
@@ -227,6 +227,9 @@ if (typeof setInterval !== 'undefined') {
       }
     }
   }, 300000);
+  if (gcTimer && typeof gcTimer.unref === 'function') {
+    gcTimer.unref();
+  }
 }
 
 /**
@@ -361,12 +364,18 @@ export function getClientIp(req: NextRequest): string {
 }
 
 /**
- * Sanitize untrusted text inputs (strip HTML tags, prevent XSS)
+ * Sanitize untrusted text inputs (strip HTML tags, prevent XSS and script injections)
  */
 export function sanitizeString(input: string, maxLen = 1000): string {
   if (typeof input !== 'string') return '';
   return input
-    .replace(/<[^>]*>/g, '') // Strip HTML tags
+    // Neutralize dangerous pseudo-protocols like javascript:, vbscript:, data:text
+    .replace(/(?:javascript|vbscript|data):/gi, '')
+    // Neutralize inline event handlers like onerror=, onload=, onclick=
+    .replace(/\bon\w+\s*=/gi, '')
+    // Strip all HTML/XML tags
+    .replace(/<[^>]*>/g, '')
+    // Convert sensitive HTML entities to safe equivalents
     .replace(/[<>'"&]/g, (char) => {
       switch (char) {
         case '<': return '&lt;';
