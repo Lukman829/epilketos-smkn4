@@ -4,14 +4,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 /**
- * 3D Interactive Digital Ballot Box & Floating Ballot Card
+ * Next-Gen Product Showcase: 3D Digital Ballot Vault on Exhibition Pedestal
  * 
- * Concept:
- * - Transparent frosted acrylic ballot box with brushed aluminum base and slot
- * - Folded digital ballots resting visibly inside the transparent box
- * - Floating pristine "E-Ballot" card poised above the slot with SMKN 4 official seal
- * - Gentle levitation breathing animation & mouse-guided tilt interaction
- * - Natural Apple-grade daylight studio lighting (clean, zero neon flare)
+ * Aesthetic: Apple Keynote / Product Launch Exhibition
+ * - Architectural stepped studio pedestal (podium pameran) with fine accent groove
+ * - Museum-grade Digital Ballot Vault: crystal optical acrylic chamber & anodized aluminum pillars
+ * - Visible deposited ballots inside the transparent chamber
+ * - Floating pristine "E-Ballot" card poised above the slot with responsive magnetic tilt
+ * - Studio Keynote Lighting Rig: overhead spotlight, key studio lights, and soft ground shadow
+ * - Slow motorized showroom turntable rotation with damped mouse inspection
  */
 
 function createBallotTexture(): THREE.CanvasTexture {
@@ -139,6 +140,49 @@ function createBallotTexture(): THREE.CanvasTexture {
   return texture;
 }
 
+function createDisplayScreenTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 160;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+
+  // Sleek Dark OLED Display Glass
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0, 0, 512, 160);
+
+  // Subtle border glow
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(2, 2, 508, 156);
+
+  // Status Indicator Dot (Active Green)
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath();
+  ctx.arc(36, 40, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Status Text
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = 'bold 14px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('PILKETOS DIGITAL VAULT • v2.6', 56, 45);
+
+  // Main School Title
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 22px system-ui, sans-serif';
+  ctx.fillText('SMKN 4 KOTA SERANG', 34, 90);
+
+  // Subtitle
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = '500 13px system-ui, sans-serif';
+  ctx.fillText('SISTEM VOTING TERENKRIPSI • TRANSPARAN & ADIL', 34, 122);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.anisotropy = 4;
+  return texture;
+}
+
 export default function HeroOrb() {
   const mountRef = useRef<HTMLDivElement>(null);
   const [webglSupported, setWebglSupported] = useState<boolean>(true);
@@ -148,7 +192,7 @@ export default function HeroOrb() {
     const container = mountRef.current;
     if (!container) return;
 
-    // 1. WebGL Verification
+    // 1. WebGL Support Verification
     const checkWebGL = () => {
       try {
         const canvas = document.createElement('canvas');
@@ -168,7 +212,7 @@ export default function HeroOrb() {
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // 2. Three.js Scene Setup (Studio Clean Perspective)
+    // 2. Three.js Scene Setup (Cinematic Exhibition View)
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       36,
@@ -176,8 +220,9 @@ export default function HeroOrb() {
       0.1,
       100
     );
-    camera.position.set(0, 0.8, 6.4);
-    camera.lookAt(0, 0, 0);
+    // Elevated 3/4 beauty angle looking down slightly at the exhibition stage
+    camera.position.set(0, 1.4, 6.8);
+    camera.lookAt(0, -0.15, 0);
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -191,213 +236,280 @@ export default function HeroOrb() {
 
     container.appendChild(renderer.domElement);
 
-    // 3. Studio Daylight Lighting (Soft, Clean, Physical)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+    // 3. Exhibition Stage Lighting Rig
+    // A. Soft Ambient Daylight
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.35);
     scene.add(ambientLight);
 
-    const mainKeyLight = new THREE.DirectionalLight(0xffffff, 1.9);
-    mainKeyLight.position.set(5, 8, 6);
-    scene.add(mainKeyLight);
+    // B. Keynote Overhead Spotlight focused on the exhibition stage
+    const spotLight = new THREE.SpotLight(0xffffff, 2.5, 14, Math.PI / 4, 0.4, 0.8);
+    spotLight.position.set(0, 7.5, 2.5);
+    spotLight.target.position.set(0, -0.3, 0);
+    scene.add(spotLight);
+    scene.add(spotLight.target);
 
-    const softFillLight = new THREE.DirectionalLight(0xf1f5f9, 0.9);
-    softFillLight.position.set(-6, -2, 4);
-    scene.add(softFillLight);
+    // C. Studio Key Light (Sculpts glass and metal specular highlights)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    keyLight.position.set(5, 7, 5);
+    scene.add(keyLight);
 
+    // D. Soft Fill Light (Illuminates shadow side naturally)
+    const fillLight = new THREE.DirectionalLight(0xf1f5f9, 0.95);
+    fillLight.position.set(-6, -1, 4);
+    scene.add(fillLight);
+
+    // E. Crisp Rim Highlight
     const rimLight = new THREE.DirectionalLight(0xe2e8f0, 1.1);
-    rimLight.position.set(-3, 6, -4);
+    rimLight.position.set(-3, 5, -5);
     scene.add(rimLight);
 
-    // 4. Main Assembly Group
-    const rootGroup = new THREE.Group();
-    // Default 3-quarter angled perspective
-    rootGroup.rotation.y = -0.38;
-    rootGroup.rotation.x = 0.14;
-    scene.add(rootGroup);
+    // 4. Main Exhibition Stand Group (Motorized Turntable)
+    const showcaseTurntable = new THREE.Group();
+    scene.add(showcaseTurntable);
 
     // =========================================================================
-    // A. 3D DIGITAL BALLOT BOX (KOTAK SUARA AKRILIK TRANSPARAN)
+    // A. ARCHITECTURAL EXHIBITION PEDESTAL (PODIUM PAMERAN PRODUK)
     // =========================================================================
-    const boxGroup = new THREE.Group();
-    boxGroup.position.set(0, -0.65, 0);
-    rootGroup.add(boxGroup);
+    const pedestalGroup = new THREE.Group();
+    showcaseTurntable.add(pedestalGroup);
 
-    // 1. Clear Frosted Acrylic Material for Box Panels
-    const acrylicMat = new THREE.MeshPhysicalMaterial({
-      color: 0xffffff,
-      transmission: 0.86,
-      opacity: 1.0,
-      transparent: true,
-      roughness: 0.08,
-      ior: 1.49,
-      reflectivity: 0.8,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.04,
-      depthWrite: false,
+    // Material: Matte Studio Ceramic / Cast Stone
+    const pedestalMat = new THREE.MeshPhysicalMaterial({
+      color: 0xf8fafc,
+      roughness: 0.28,
+      metalness: 0.08,
+      clearcoat: 0.5,
+      clearcoatRoughness: 0.15,
     });
 
-    const boxW = 2.3;
-    const boxH = 2.0;
-    const boxD = 2.1;
-    const wallThick = 0.04;
-
-    // Front Wall
-    const frontWall = new THREE.Mesh(
-      new THREE.BoxGeometry(boxW, boxH, wallThick),
-      acrylicMat
+    // Tier 1: Main Base Plinth
+    const plinth1 = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.35, 2.45, 0.32, 64),
+      pedestalMat
     );
-    frontWall.position.z = boxD / 2;
-    boxGroup.add(frontWall);
+    plinth1.position.y = -1.55;
+    pedestalGroup.add(plinth1);
 
-    // Back Wall
-    const backWall = new THREE.Mesh(
-      new THREE.BoxGeometry(boxW, boxH, wallThick),
-      acrylicMat
+    // Tier 2: Upper Plinth Step
+    const plinth2 = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.18, 2.22, 0.14, 64),
+      pedestalMat
     );
-    backWall.position.z = -boxD / 2;
-    boxGroup.add(backWall);
+    plinth2.position.y = -1.32;
+    pedestalGroup.add(plinth2);
 
-    // Left Wall
-    const leftWall = new THREE.Mesh(
-      new THREE.BoxGeometry(wallThick, boxH, boxD),
-      acrylicMat
-    );
-    leftWall.position.x = -boxW / 2;
-    boxGroup.add(leftWall);
-
-    // Right Wall
-    const rightWall = new THREE.Mesh(
-      new THREE.BoxGeometry(wallThick, boxH, boxD),
-      acrylicMat
-    );
-    rightWall.position.x = boxW / 2;
-    boxGroup.add(rightWall);
-
-    // Base Metallic Plate (Inside bottom)
-    const baseMat = new THREE.MeshStandardMaterial({
-      color: 0xe2e8f0,
+    // Accent Ring: Precision Anodized Cobalt Groove
+    const accentRingMat = new THREE.MeshStandardMaterial({
+      color: 0x2563eb,
       metalness: 0.85,
       roughness: 0.2,
     });
-    const basePlate = new THREE.Mesh(
-      new THREE.BoxGeometry(boxW + 0.08, 0.08, boxD + 0.08),
-      baseMat
+    const accentRing = new THREE.Mesh(
+      new THREE.TorusGeometry(2.2, 0.014, 16, 64),
+      accentRingMat
     );
-    basePlate.position.y = -boxH / 2;
-    boxGroup.add(basePlate);
+    accentRing.rotation.x = Math.PI / 2;
+    accentRing.position.y = -1.25;
+    pedestalGroup.add(accentRing);
 
-    // Top Lid Acrylic with Slot
-    // Top lid left segment
-    const lidLeft = new THREE.Mesh(
-      new THREE.BoxGeometry((boxW - 1.25) / 2, wallThick, boxD),
-      acrylicMat
+    // Ground Soft Contact Shadow
+    const groundShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(5.2, 5.2),
+      new THREE.MeshBasicMaterial({
+        color: 0x64748b,
+        transparent: true,
+        opacity: 0.14,
+      })
     );
-    lidLeft.position.set(-boxW / 2 + (boxW - 1.25) / 4, boxH / 2, 0);
-    boxGroup.add(lidLeft);
+    groundShadow.rotation.x = -Math.PI / 2;
+    groundShadow.position.y = -1.72;
+    showcaseTurntable.add(groundShadow);
 
-    // Top lid right segment
-    const lidRight = new THREE.Mesh(
-      new THREE.BoxGeometry((boxW - 1.25) / 2, wallThick, boxD),
-      acrylicMat
+    // =========================================================================
+    // B. DIGITAL BALLOT TERMINAL / VAULT (PRODUK KOTAK SUARA GENERASI BARU)
+    // =========================================================================
+    const terminalGroup = new THREE.Group();
+    terminalGroup.position.set(0, -1.24, 0);
+    showcaseTurntable.add(terminalGroup);
+
+    const vaultW = 2.1;
+    const vaultH = 1.85;
+    const vaultD = 1.95;
+
+    // 1. Brushed Aluminum Terminal Base Plate
+    const brushedMetalMat = new THREE.MeshStandardMaterial({
+      color: 0xe2e8f0,
+      metalness: 0.9,
+      roughness: 0.22,
+    });
+
+    const terminalBase = new THREE.Mesh(
+      new THREE.BoxGeometry(vaultW + 0.1, 0.09, vaultD + 0.1),
+      brushedMetalMat
     );
-    lidRight.position.set(boxW / 2 - (boxW - 1.25) / 4, boxH / 2, 0);
-    boxGroup.add(lidRight);
+    terminalBase.position.y = 0.045;
+    terminalGroup.add(terminalBase);
 
-    // Top lid front & back fillers around slot
-    const lidFront = new THREE.Mesh(
-      new THREE.BoxGeometry(1.25, wallThick, (boxD - 0.16) / 2),
-      acrylicMat
+    // 2. Four Museum-Grade Architectural Corner Pillars
+    const pillarGeo = new THREE.CylinderGeometry(0.04, 0.04, vaultH, 24);
+    const pillarMat = new THREE.MeshPhysicalMaterial({
+      color: 0xd1d5db,
+      metalness: 0.92,
+      roughness: 0.18,
+      clearcoat: 0.8,
+    });
+
+    const pOffsetW = vaultW / 2;
+    const pOffsetD = vaultD / 2;
+    const pY = vaultH / 2 + 0.09;
+
+    const corners = [
+      [-pOffsetW, pY, -pOffsetD],
+      [pOffsetW, pY, -pOffsetD],
+      [-pOffsetW, pY, pOffsetD],
+      [pOffsetW, pY, pOffsetD],
+    ];
+
+    corners.forEach(([cx, cy, cz]) => {
+      const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+      pillar.position.set(cx, cy, cz);
+      terminalGroup.add(pillar);
+    });
+
+    // 3. Crystal Optical Glass Chamber Panels
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      transmission: 0.9,
+      opacity: 1.0,
+      transparent: true,
+      roughness: 0.05,
+      ior: 1.5,
+      reflectivity: 0.88,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.03,
+      depthWrite: false,
+    });
+
+    const wallThick = 0.03;
+
+    // Front Glass
+    const frontGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(vaultW, vaultH, wallThick),
+      glassMat
     );
-    lidFront.position.set(0, boxH / 2, boxD / 4 + 0.04);
-    boxGroup.add(lidFront);
+    frontGlass.position.set(0, pY, pOffsetD);
+    terminalGroup.add(frontGlass);
 
-    const lidBack = new THREE.Mesh(
-      new THREE.BoxGeometry(1.25, wallThick, (boxD - 0.16) / 2),
-      acrylicMat
+    // Back Glass
+    const backGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(vaultW, vaultH, wallThick),
+      glassMat
     );
-    lidBack.position.set(0, boxH / 2, -boxD / 4 - 0.04);
-    boxGroup.add(lidBack);
+    backGlass.position.set(0, pY, -pOffsetD);
+    terminalGroup.add(backGlass);
 
-    // Precision Metallic Slot Bezel Frame
+    // Left Glass
+    const leftGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(wallThick, vaultH, vaultD),
+      glassMat
+    );
+    leftGlass.position.set(-pOffsetW, pY, 0);
+    terminalGroup.add(leftGlass);
+
+    // Right Glass
+    const rightGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(wallThick, vaultH, vaultD),
+      glassMat
+    );
+    rightGlass.position.set(pOffsetW, pY, 0);
+    terminalGroup.add(rightGlass);
+
+    // 4. Top Sculpted Aluminum Deck with Chamfered Edges
+    const topCapY = vaultH + 0.14;
+    const topCap = new THREE.Mesh(
+      new THREE.BoxGeometry(vaultW + 0.12, 0.1, vaultD + 0.12),
+      brushedMetalMat
+    );
+    topCap.position.y = topCapY;
+    terminalGroup.add(topCap);
+
+    // Precision Insertion Slot
     const slotBezelMat = new THREE.MeshStandardMaterial({
-      color: 0x2563eb,
-      metalness: 0.65,
+      color: 0x1d4ed8,
+      metalness: 0.7,
       roughness: 0.25,
     });
-    const slotBezelGeo = new THREE.BoxGeometry(1.3, 0.03, 0.14);
-    const slotBezel = new THREE.Mesh(slotBezelGeo, slotBezelMat);
-    slotBezel.position.set(0, boxH / 2 + 0.015, 0);
-    boxGroup.add(slotBezel);
-
-    // Front Emblem / Logo Badge on Acrylic Box
-    const badgeMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      metalness: 0.3,
-      roughness: 0.3,
-    });
-    const badge = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.32, 0.32, 0.02, 32),
-      badgeMat
+    const slotBezel = new THREE.Mesh(
+      new THREE.BoxGeometry(1.36, 0.03, 0.14),
+      slotBezelMat
     );
-    badge.rotation.x = Math.PI / 2;
-    badge.position.set(0, 0, boxD / 2 + 0.02);
-    boxGroup.add(badge);
+    slotBezel.position.set(0, topCapY + 0.055, 0);
+    terminalGroup.add(slotBezel);
 
-    // Badge Ring Accent
-    const badgeRingMat = new THREE.MeshStandardMaterial({
-      color: 0x2563eb,
-      metalness: 0.8,
-      roughness: 0.2,
-    });
-    const badgeRing = new THREE.Mesh(
-      new THREE.TorusGeometry(0.32, 0.015, 16, 48),
-      badgeRingMat
+    // Subtly Illuminated Slot Opening Cavity (Dark void inside slot)
+    const slotHole = new THREE.Mesh(
+      new THREE.BoxGeometry(1.24, 0.04, 0.05),
+      new THREE.MeshBasicMaterial({ color: 0x0f172a })
     );
-    badgeRing.position.set(0, 0, boxD / 2 + 0.03);
-    boxGroup.add(badgeRing);
+    slotHole.position.set(0, topCapY + 0.065, 0);
+    terminalGroup.add(slotHole);
 
-    // =========================================================================
-    // B. DROPPED BALLOTS INSIDE THE TRANSPARENT BOX (SURAT SUARA DI DALAM KOTAK)
-    // =========================================================================
+    // 5. Front Interactive OLED Display Panel
+    const displayTex = createDisplayScreenTexture();
+    const displayMat = new THREE.MeshPhysicalMaterial({
+      map: displayTex,
+      roughness: 0.15,
+      clearcoat: 0.95,
+      metalness: 0.1,
+    });
+    const displayPanel = new THREE.Mesh(
+      new THREE.BoxGeometry(1.4, 0.44, 0.02),
+      displayMat
+    );
+    displayPanel.position.set(0, 0.9, pOffsetD + 0.025);
+    terminalGroup.add(displayPanel);
+
+    // 6. Deposited Ballots resting inside the glass chamber
     const droppedBallotMat = new THREE.MeshStandardMaterial({
       color: 0xf1f5f9,
       roughness: 0.35,
     });
-    const droppedCardGeo = new THREE.BoxGeometry(0.9, 0.02, 0.6);
+    const droppedCardGeo = new THREE.BoxGeometry(0.85, 0.016, 0.58);
 
-    const dropped1 = new THREE.Mesh(droppedCardGeo, droppedBallotMat);
-    dropped1.position.set(-0.25, -boxH / 2 + 0.05, 0.1);
-    dropped1.rotation.set(0.04, 0.35, 0.02);
-    boxGroup.add(dropped1);
+    const d1 = new THREE.Mesh(droppedCardGeo, droppedBallotMat);
+    d1.position.set(-0.25, 0.12, 0.1);
+    d1.rotation.set(0.04, 0.35, 0.02);
+    terminalGroup.add(d1);
 
-    const dropped2 = new THREE.Mesh(droppedCardGeo, droppedBallotMat);
-    dropped2.position.set(0.3, -boxH / 2 + 0.07, -0.15);
-    dropped2.rotation.set(-0.03, -0.45, 0.05);
-    boxGroup.add(dropped2);
+    const d2 = new THREE.Mesh(droppedCardGeo, droppedBallotMat);
+    d2.position.set(0.3, 0.14, -0.15);
+    d2.rotation.set(-0.03, -0.45, 0.05);
+    terminalGroup.add(d2);
 
-    const dropped3 = new THREE.Mesh(droppedCardGeo, droppedBallotMat);
-    dropped3.position.set(-0.05, -boxH / 2 + 0.09, 0.0);
-    dropped3.rotation.set(0.02, 0.15, -0.04);
-    boxGroup.add(dropped3);
+    const d3 = new THREE.Mesh(droppedCardGeo, droppedBallotMat);
+    d3.position.set(-0.05, 0.16, 0.0);
+    d3.rotation.set(0.02, 0.15, -0.04);
+    terminalGroup.add(d3);
 
     // =========================================================================
-    // C. ACTIVE FLOATING BALLOT CARD (SURAT SUARA MELAYANG DI ATAS SLOT)
+    // C. THE HERO FLOATING "E-BALLOT" CARD (PRODUK DIGITAL UNVEILED)
     // =========================================================================
     const ballotTexture = createBallotTexture();
 
     const activeBallotMatFront = new THREE.MeshPhysicalMaterial({
       map: ballotTexture,
-      roughness: 0.22,
-      clearcoat: 0.85,
-      clearcoatRoughness: 0.08,
+      roughness: 0.18,
+      clearcoat: 0.95,
+      clearcoatRoughness: 0.06,
       metalness: 0.05,
+      reflectivity: 0.9,
     });
 
     const activeBallotMatBack = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      roughness: 0.3,
+      roughness: 0.28,
     });
 
-    // Multi-material card (front face has printed ballot texture)
     const cardMaterials = [
       activeBallotMatBack, // right
       activeBallotMatBack, // left
@@ -407,29 +519,19 @@ export default function HeroOrb() {
       activeBallotMatBack, // back
     ];
 
-    const activeBallotGeo = new THREE.BoxGeometry(1.05, 1.48, 0.015);
-    const activeBallot = new THREE.Mesh(activeBallotGeo, cardMaterials);
-    // Initial poise above the slot with a gentle inviting angle
-    activeBallot.position.set(0, 1.25, 0);
+    const activeBallot = new THREE.Mesh(
+      new THREE.BoxGeometry(1.05, 1.48, 0.016),
+      cardMaterials
+    );
+    // Initial poise directly above the slot
+    activeBallot.position.set(0, 1.62, 0);
     activeBallot.rotation.x = -0.32;
-    activeBallot.rotation.y = 0.15;
-    rootGroup.add(activeBallot);
-
-    // Contact soft shadow disc beneath the box
-    const shadowGeo = new THREE.PlaneGeometry(3.2, 3.2);
-    const shadowMat = new THREE.MeshBasicMaterial({
-      color: 0x94a3b8,
-      transparent: true,
-      opacity: 0.18,
-    });
-    const shadowPlane = new THREE.Mesh(shadowGeo, shadowMat);
-    shadowPlane.rotation.x = -Math.PI / 2;
-    shadowPlane.position.y = -1.68;
-    rootGroup.add(shadowPlane);
+    activeBallot.rotation.y = 0.12;
+    terminalGroup.add(activeBallot);
 
     setIsLoaded(true);
 
-    // 5. Interaction: Mouse Parallax & Dynamic Card Tilt
+    // 5. Interaction: Mouse Parallax & Dynamic Showcase Angles
     const target = { x: 0, y: 0 };
     const current = { x: 0, y: 0 };
     let scrollY = 0;
@@ -438,8 +540,8 @@ export default function HeroOrb() {
       const rect = container.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-      target.x = x * 0.5;
-      target.y = y * 0.5;
+      target.x = x * 0.45;
+      target.y = y * 0.45;
     };
 
     const handleScroll = () => {
@@ -461,7 +563,7 @@ export default function HeroOrb() {
 
     window.addEventListener('resize', handleResize);
 
-    // 6. Animation Loop (Levitation Float & Mouse Interaction)
+    // 6. Animation Loop (Exhibition Turntable Rotation & Levitation)
     let animationFrameId: number;
     const clock = new THREE.Clock();
 
@@ -470,35 +572,34 @@ export default function HeroOrb() {
 
       const elapsedTime = clock.getElapsedTime();
 
-      // Damped smooth mouse interpolation
-      current.x += (target.x - current.x) * 0.055;
-      current.y += (target.y - current.y) * 0.055;
+      // Smooth mouse interpolation (inertia)
+      current.x += (target.x - current.x) * 0.05;
+      current.y += (target.y - current.y) * 0.05;
 
       if (!prefersReducedMotion) {
-        // Floating Ballot Card: Natural Levitation Float & Tilt towards Mouse
-        const hoverBob = Math.sin(elapsedTime * 1.8) * 0.08;
-        const hoverRoll = Math.sin(elapsedTime * 1.2) * 0.03;
-        
-        // Card lowers slightly when mouse nears center (ready-to-insert feel)
+        // Motorized Showroom Turntable Sway (360° product reveal feel)
+        const turntableSway = Math.sin(elapsedTime * 0.45) * 0.22 - 0.25;
+        showcaseTurntable.rotation.y = turntableSway + current.x * 0.4;
+        showcaseTurntable.rotation.x = 0.06 - current.y * 0.2;
+
+        // Floating Ballot Card: Aerodynamic Levitation Float & Tilt
+        const hoverBob = Math.sin(elapsedTime * 1.8) * 0.07;
+        const hoverRoll = Math.sin(elapsedTime * 1.3) * 0.025;
+
+        // Dynamic dip when user points near center
         const dip = Math.abs(current.x) * 0.08;
-        activeBallot.position.y = 1.3 + hoverBob - dip;
-        activeBallot.position.x = current.x * 0.25;
+        activeBallot.position.y = 1.62 + hoverBob - dip;
+        activeBallot.position.x = current.x * 0.22;
 
-        // Card tilts dynamically with mouse movement
-        activeBallot.rotation.x = -0.32 - current.y * 0.35;
-        activeBallot.rotation.y = 0.15 + current.x * 0.45;
-        activeBallot.rotation.z = hoverRoll + current.x * 0.12;
-
-        // Gentle box turntable sway
-        const boxTurntable = Math.sin(elapsedTime * 0.6) * 0.04;
-        boxGroup.rotation.y = boxTurntable;
+        // Card tilts toward cursor like magnetic levitation
+        activeBallot.rotation.x = -0.32 - current.y * 0.3;
+        activeBallot.rotation.y = 0.12 + current.x * 0.42;
+        activeBallot.rotation.z = hoverRoll + current.x * 0.1;
       }
 
-      // Parallax rotation of the entire scene
+      // Parallax scroll reaction
       const scrollFactor = Math.min(scrollY / 800, 1);
-      rootGroup.rotation.y = -0.38 + current.x * 0.35 + scrollFactor * 0.3;
-      rootGroup.rotation.x = 0.14 - current.y * 0.25;
-      rootGroup.position.y = Math.sin(elapsedTime * 0.9) * 0.03 - scrollFactor * 0.2;
+      showcaseTurntable.position.y = -scrollFactor * 0.25;
 
       renderer.render(scene, camera);
     };
@@ -512,16 +613,18 @@ export default function HeroOrb() {
       window.removeEventListener('resize', handleResize);
 
       // Clean up geometries & materials
-      acrylicMat.dispose();
-      baseMat.dispose();
+      pedestalMat.dispose();
+      accentRingMat.dispose();
+      brushedMetalMat.dispose();
+      pillarMat.dispose();
+      glassMat.dispose();
       slotBezelMat.dispose();
-      badgeMat.dispose();
-      badgeRingMat.dispose();
+      displayMat.dispose();
+      displayTex.dispose();
       droppedBallotMat.dispose();
       activeBallotMatFront.dispose();
       activeBallotMatBack.dispose();
       ballotTexture.dispose();
-      shadowMat.dispose();
       renderer.dispose();
 
       if (container.contains(renderer.domElement)) {
@@ -555,9 +658,9 @@ export default function HeroOrb() {
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
       />
-      {/* Soft Daylight Neutral Shadow Backdrop */}
-      <div className="absolute -z-10 w-3/4 h-3/4 rounded-full bg-slate-200/40 blur-3xl pointer-events-none" />
-      <div className="absolute -z-10 w-1/2 h-1/2 rounded-full bg-blue-500/[0.04] blur-2xl pointer-events-none" />
+      {/* Studio Floor Soft Backdrop Glow */}
+      <div className="absolute -z-10 w-4/5 h-4/5 rounded-full bg-slate-200/40 blur-3xl pointer-events-none" />
+      <div className="absolute -z-10 w-1/2 h-1/2 rounded-full bg-blue-500/[0.03] blur-2xl pointer-events-none" />
     </div>
   );
 }
