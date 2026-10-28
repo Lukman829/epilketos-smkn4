@@ -141,38 +141,66 @@ export default function HeroOrb() {
     ring3.rotation.y = Math.PI / 3.2;
     group.add(ring3);
 
-    // F. Luminous Stardust Particle Constellation
-    const particleCount = 220;
+    // F. Google Antigravity Radial Particle Constellation (Radial Iris Rays)
+    const particleCount = 420;
     const particleGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
 
+    const getAntigravityRgb = (deg: number) => {
+      const d = ((deg % 360) + 360) % 360;
+      const stops = [
+        { deg: 0, r: 0.23, g: 0.51, b: 0.96 },   // #3b82f6 Blue
+        { deg: 45, r: 0.31, g: 0.27, b: 0.90 },  // #4f46e5 Indigo
+        { deg: 90, r: 0.49, g: 0.23, b: 0.93 },  // #7c3aed Purple
+        { deg: 135, r: 0.86, g: 0.15, b: 0.47 }, // #db2777 Magenta
+        { deg: 180, r: 0.94, g: 0.27, b: 0.27 }, // #ef4444 Coral Red
+        { deg: 225, r: 0.98, g: 0.45, b: 0.09 }, // #f97316 Orange
+        { deg: 270, r: 0.96, g: 0.62, b: 0.04 }, // #f59e0b Amber
+        { deg: 315, r: 0.02, g: 0.71, b: 0.83 }, // #06b6d4 Cyan
+        { deg: 360, r: 0.23, g: 0.51, b: 0.96 },
+      ];
+      for (let s = 0; s < stops.length - 1; s++) {
+        if (d >= stops[s].deg && d <= stops[s + 1].deg) {
+          const t = (d - stops[s].deg) / (stops[s + 1].deg - stops[s].deg);
+          return {
+            r: stops[s].r + t * (stops[s + 1].r - stops[s].r),
+            g: stops[s].g + t * (stops[s + 1].g - stops[s].g),
+            b: stops[s].b + t * (stops[s + 1].b - stops[s].b),
+          };
+        }
+      }
+      return { r: 0.23, g: 0.51, b: 0.96 };
+    };
+
     for (let i = 0; i < particleCount; i++) {
-      const u = Math.random();
-      const v = Math.random();
-      const theta = u * 2.0 * Math.PI;
-      const phi = Math.acos(2.0 * v - 1.0);
-      const r = 2.0 + Math.random() * 1.4;
-      const sinPhi = Math.sin(phi);
+      const spokeCount = 36;
+      const spokeIndex = i % spokeCount;
+      const baseAngle = (spokeIndex / spokeCount) * Math.PI * 2;
+      const angle = baseAngle + (Math.random() - 0.5) * 0.14;
 
-      positions[i * 3] = r * sinPhi * Math.cos(theta);
-      positions[i * 3 + 1] = r * sinPhi * Math.sin(theta);
-      positions[i * 3 + 2] = r * Math.cos(phi);
+      const r = 1.75 + Math.pow(Math.random(), 0.75) * 1.85;
+      const z = (Math.random() - 0.5) * 1.1 * (r / 2.8);
 
-      const isBlue = Math.random() > 0.35;
-      colors[i * 3] = isBlue ? 0.23 : 0.88;
-      colors[i * 3 + 1] = isBlue ? 0.51 : 0.94;
-      colors[i * 3 + 2] = isBlue ? 0.96 : 1.0;
+      positions[i * 3] = Math.cos(angle) * r;
+      positions[i * 3 + 1] = Math.sin(angle) * r;
+      positions[i * 3 + 2] = z;
+
+      const deg = ((angle * 180 / Math.PI) + 360) % 360;
+      const rgb = getAntigravityRgb(deg);
+      colors[i * 3] = rgb.r;
+      colors[i * 3 + 1] = rgb.g;
+      colors[i * 3 + 2] = rgb.b;
     }
 
     particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const particleMat = new THREE.PointsMaterial({
-      size: 0.038,
+      size: 0.045,
       vertexColors: true,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.88,
       blending: THREE.AdditiveBlending,
     });
     const particleSystem = new THREE.Points(particleGeo, particleMat);
@@ -248,6 +276,7 @@ export default function HeroOrb() {
         cageMesh.rotation.y = -elapsedTime * 0.06;
         cageMesh.rotation.x = elapsedTime * 0.03;
         particleSystem.rotation.y = elapsedTime * 0.08;
+        particleSystem.rotation.z = elapsedTime * 0.05;
       }
 
       // Parallax rotation & subtle levitation
