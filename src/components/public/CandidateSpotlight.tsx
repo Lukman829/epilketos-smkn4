@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Quote,
   GraduationCap,
+  Users,
 } from 'lucide-react';
 
 interface CandidateSpotlightProps {
@@ -85,7 +86,8 @@ export default function CandidateSpotlight({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <span>👑 3 Calon Ketua OSIS</span>
+            <Award className="w-4 h-4 text-blue-600" />
+            <span>3 Calon Ketua OSIS</span>
           </button>
 
           <button
@@ -97,7 +99,8 @@ export default function CandidateSpotlight({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <span>🤝 6 Calon Wakil Ketua OSIS</span>
+            <Users className="w-4 h-4 text-emerald-600" />
+            <span>6 Calon Wakil Ketua OSIS</span>
           </button>
         </div>
 
