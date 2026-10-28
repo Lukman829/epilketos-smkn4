@@ -6,8 +6,7 @@ import Navbar from '@/components/public/Navbar';
 import Footer from '@/components/public/Footer';
 import HeroOrb from '@/components/3d/HeroOrb';
 import CinematicIntro from '@/components/public/CinematicIntro';
-import CandidateCard from '@/components/public/CandidateCard';
-import CandidateDetailModal from '@/components/public/CandidateDetailModal';
+import CandidateSpotlight from '@/components/public/CandidateSpotlight';
 import SchoolLogo from '@/components/common/SchoolLogo';
 import { Candidate, ElectionSettings } from '@/types/election';
 import { INITIAL_CANDIDATES, DEFAULT_ELECTION_SETTINGS } from '@/lib/constants';
@@ -32,8 +31,6 @@ export default function HomePage() {
   const [wakilCandidates, setWakilCandidates] = useState<Candidate[]>(() =>
     INITIAL_CANDIDATES.filter((c) => c.type === 'wakil')
   );
-  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
-  const [activeTab, setActiveTab] = useState<'ketua' | 'wakil'>('ketua');
 
   useEffect(() => {
     async function loadData() {
@@ -221,67 +218,36 @@ export default function HomePage() {
         </section>
 
         {/* =========================================================================
-            C. CANDIDATE EXPLORATION (3 KETUA & 6 WAKIL)
+            C. CANDIDATE SPOTLIGHT SHOWCASE (3 KETUA & 6 WAKIL)
            ========================================================================= */}
         <section id="kandidat-section" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
+          <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-mono font-bold uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Eksplorasi Profil Kandidat</span>
+              <span>Spotlight Kandidat Resmi OSIS</span>
             </div>
 
             <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
-              Kenali Visi, Misi & Gagasan.
+              Kenali Visi, Misi &amp; Gagasan.
             </h2>
 
             <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-              Kandidat Ketua dan Calon Wakil bukan pasangan tetap. Pemilih memiliki kebebasan demokratis penuh untuk mengombinasikan satu calon ketua terbaik dengan satu calon wakil terbaik.
+              Jelajahi gagasan calon ketua dan calon wakil ketua OSIS. Pilih nama kandidat pada daftar untuk melihat profil gagasan secara langsung.
             </p>
-
-            {/* Segmented Tab Switcher */}
-            <div className="pt-4 flex items-center justify-center">
-              <div className="inline-flex p-1.5 rounded-2xl bg-slate-200/80 border border-slate-200">
-                <button
-                  onClick={() => setActiveTab('ketua')}
-                  className={`px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                    activeTab === 'ketua'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  3 Calon Ketua OSIS
-                </button>
-                <button
-                  onClick={() => setActiveTab('wakil')}
-                  className={`px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                    activeTab === 'wakil'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  6 Calon Wakil Ketua OSIS
-                </button>
-              </div>
-            </div>
           </div>
 
-          {/* Candidate Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {(activeTab === 'ketua' ? ketuaCandidates : wakilCandidates).map((candidate) => (
-              <CandidateCard
-                key={candidate.id}
-                candidate={candidate}
-                onOpenDetail={(c) => setSelectedCandidate(c)}
-              />
-            ))}
-          </div>
+          {/* Spotlight Interactive Showcase (Option 1) */}
+          <CandidateSpotlight
+            ketuaCandidates={ketuaCandidates}
+            wakilCandidates={wakilCandidates}
+          />
 
           <div className="mt-14 text-center">
             <Link
               href="/kandidat"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 text-xs sm:text-sm font-bold transition-colors shadow-sm"
             >
-              <span>Lihat Perbandingan Lengkap Seluruh Kandidat</span>
+              <span>Lihat Halaman Seluruh Profil Lengkap Kandidat</span>
               <ArrowRight className="w-4 h-4 text-slate-500" />
             </Link>
           </div>
@@ -320,83 +286,55 @@ export default function HomePage() {
 
               {/* Step 2 */}
               <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 font-mono font-black text-lg flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 font-mono font-black text-lg flex items-center justify-center">
                   02
                 </div>
                 <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                  Tentukan 1 Ketua & 1 Wakil
+                  Tentukan Pilihan Mandiri
                 </h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Pilih tepat satu calon Ketua OSIS dan satu calon Wakil Ketua OSIS secara bebas tanpa terikat pasangan. Periksa kembali ringkasan pilihan Anda.
+                  Pilih 1 (satu) Calon Ketua OSIS dan 1 (satu) Calon Wakil Ketua OSIS pilihan Anda secara terpisah dan bebas rahasia.
                 </p>
               </div>
 
               {/* Step 3 */}
               <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-300 text-slate-700 font-mono font-black text-lg flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 font-mono font-black text-lg flex items-center justify-center">
                   03
                 </div>
                 <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                  Konfirmasi & Rekam Suara
+                  Konfirmasi & Bukti Sah
                 </h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Konfirmasi pilihan Anda. Server memproses surat suara dan mengunci status token. Bukti keberhasilan resmi langsung ditampilkan di layar.
+                  Tinjau kembali pilihan Anda pada layar verifikasi akhir, lalu kirim suara sah hingga kode verifikasi digital ditampilkan.
                 </p>
               </div>
-            </div>
-
-            <div className="mt-12 text-center">
-              <Link
-                href="/vote"
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-slate-900 hover:bg-blue-600 text-white font-bold text-sm transition-all shadow-md"
-              >
-                <Vote className="w-4 h-4 text-blue-400" />
-                <span>Masuk ke Bilik Suara Sekarang</span>
-              </Link>
             </div>
           </div>
         </section>
 
         {/* =========================================================================
-            E. SECURITY & INTEGRITY ARCHITECTURE
+            E. SECURITY PILLARS
            ========================================================================= */}
-        <section className="py-20 bg-white">
+        <section className="py-20 bg-white border-t border-slate-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="rounded-3xl border border-slate-200 bg-[#F8FAFC] p-8 sm:p-14 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-              <div className="lg:col-span-6 space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-300 text-xs font-mono font-bold">
-                  <ShieldCheck className="w-4 h-4 text-blue-600" />
-                  <span>ARSITEKTUR TEKNIS SISTEM</span>
-                </div>
-
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                  Pemisahan Data Pemilih dan Pilihan Suara.
-                </h2>
-
-                <p className="text-slate-600 text-sm leading-relaxed">
-                  E-PILKETOS memisahkan verifikasi token dari surat suara (ballot). Panitia dapat melihat statistik kehadiran per kelas, namun tidak memiliki akses teknis untuk mengaitkan identitas siswa atau nomor token dengan pilihan kandidat yang dipilih.
+            <div className="rounded-3xl bg-slate-50 border border-slate-200 p-8 sm:p-14 space-y-10">
+              <div className="max-w-2xl space-y-2">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-blue-600">
+                  Transparansi & Keamanan
+                </span>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  Arsitektur Keamanan LUBER JURDIL
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600">
+                  Integritas pemilihan dijamin melalui pemisahan data kriptografi tanpa kompromi.
                 </p>
-
-                <div className="space-y-2.5 pt-2">
-                  <div className="flex items-center gap-3 text-xs sm:text-sm text-slate-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                    <span>Token terenkripsi satu kali pakai (One-Time Token Hash).</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs sm:text-sm text-slate-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                    <span>Tabel surat suara tersimpan tanpa relasi (foreign key) ke identitas pemilih.</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs sm:text-sm text-slate-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                    <span>Row Level Security (RLS) PostgreSQL melindungi akses data produksi.</span>
-                  </div>
-                </div>
               </div>
 
-              <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-2">
                   <Lock className="w-5 h-5 text-blue-600" />
-                  <h4 className="font-extrabold text-sm text-slate-900">Anti-Double Voting</h4>
+                  <h4 className="font-extrabold text-sm text-slate-900">Token Ter-Hash</h4>
                   <p className="text-xs text-slate-500 leading-relaxed">
                     Setiap token langsung berstatus hangus (used) seketika setelah pilihan dikonfirmasi.
                   </p>
@@ -430,12 +368,6 @@ export default function HomePage() {
           </div>
         </section>
       </main>
-
-      {/* Global Candidate Detail Modal */}
-      <CandidateDetailModal
-        candidate={selectedCandidate}
-        onClose={() => setSelectedCandidate(null)}
-      />
 
       {/* Global Footer */}
       <Footer />
