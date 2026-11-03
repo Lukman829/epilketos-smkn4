@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS candidates (
 -- 3. CLASSES (Voter Quota & Aggregate Turnout)
 CREATE TABLE IF NOT EXISTS classes (
     id TEXT PRIMARY KEY,
-    grade TEXT NOT NULL CHECK (grade IN ('10', '11')),
+    grade TEXT NOT NULL CHECK (grade IN ('10', '11', '12')),
     major TEXT NOT NULL,
     name TEXT NOT NULL UNIQUE,
     voter_quota INTEGER NOT NULL DEFAULT 36,

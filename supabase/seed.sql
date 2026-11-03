@@ -29,7 +29,7 @@ VALUES
 -- Wakil
 ('w-01', 'wakil', 1, 'Fathir Al-Ghifari', 'X TKJ 1 (Teknik Komputer & Jaringan)', 'Eksekusi Cepat, Solusi Tepat untuk Semua Siswa', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80', 'Mewujudkan kepengurusan OSIS yang tanggap dan berfokus pada efisiensi kerja tim serta pemberdayaan siswa.', ARRAY['Mendampingi Ketua OSIS dalam koordinasi harian seluruh divisi dan seksi bidang.', 'Menyusun basis data inventaris kegiatan ekskul secara digital dan transparan.', 'Mengawal aspirasi kelas 10 dan 11 agar selalu ditindaklanjuti secara berkesinambungan.'], ARRAY['Audit Kerja Berkala OSIS', 'Helpdesk Aspirasi Kelas'], true, 1),
 
-('w-02', 'wakil', 2, 'Nabila Zahra Choirunissa', 'X TBSM 1 (Teknik & Bisnis Sepeda Motor)', 'Sinergi Empati, Gerak Terukur untuk Hasil Maksimal', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80', 'Menjadi jembatan komunikasi yang harmonis antar angkatan dan memperkuat nilai kekeluargaan di sekolah.', ARRAY['Mendorong keikutsertaan aktif siswi dalam kepemimpinan dan keorganisasian sekolah.', 'Menyelenggarakan kegiatan keakraban siswa berkala yang mempererat tali silaturahmi.', 'Memastikan seluruh informasi kepanitiaan tersampaikan cepat ke perwakilan tiap kelas.'], ARRAY['Forum Perwakilan Kelas (FPK)', 'Pekan Harmoni Siswa'], true, 2),
+('w-02', 'wakil', 2, 'Nabila Zahra Choirunissa', 'X TBSM (Teknik & Bisnis Sepeda Motor)', 'Sinergi Empati, Gerak Terukur untuk Hasil Maksimal', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80', 'Menjadi jembatan komunikasi yang harmonis antar angkatan dan memperkuat nilai kekeluargaan di sekolah.', ARRAY['Mendorong keikutsertaan aktif siswi dalam kepemimpinan dan keorganisasian sekolah.', 'Menyelenggarakan kegiatan keakraban siswa berkala yang mempererat tali silaturahmi.', 'Memastikan seluruh informasi kepanitiaan tersampaikan cepat ke perwakilan tiap kelas.'], ARRAY['Forum Perwakilan Kelas (FPK)', 'Pekan Harmoni Siswa'], true, 2),
 
 ('w-03', 'wakil', 3, 'Bagas Satria Yudha', 'X AK 1 (Akuntansi)', 'Dedikasi Teruji, Siap Bekerja Nyata untuk Kemajuan', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=800&q=80', 'Menghadirkan tata kelola kegiatan siswa yang tertib, atraktif, dan berdampak positif bagi iklim belajar sekolah.', ARRAY['Mengelola alur publikasi dan dokumentasi acara sekolah dengan standar kreatif tinggi.', 'Mengoptimalkan peran majalah dinding digital dan media sosial sekolah.', 'Mendukung program pengembangan minat bakat di luar jam pelajaran resmi.'], ARRAY['Dokumentasi Kreatif SMKN 4', 'Workshop Literasi Finansial & Karir'], true, 3),
 
@@ -46,42 +46,56 @@ ON CONFLICT (id) DO UPDATE SET
     missions = EXCLUDED.missions,
     programs = EXCLUDED.programs;
 
--- Seed Classes (30 Rombel, Masing-masing 36 Siswa = 1.080 Siswa)
+-- Seed Classes (42 Rombel, Masing-masing 36 Siswa = 1.512 Siswa)
 INSERT INTO classes (id, grade, major, name, voter_quota)
 VALUES
--- Kelas 10 (15 rombel)
-('cls-10-tkj-1', '10', 'TKJ', 'X TKJ 1', 36),
-('cls-10-tkj-2', '10', 'TKJ', 'X TKJ 2', 36),
-('cls-10-tsm',   '10', 'TSM', 'X TSM',   36),
-('cls-10-tkro-1','10', 'TKRO','X TKRO 1',36),
-('cls-10-tkro-2','10', 'TKRO','X TKRO 2',36),
-('cls-10-tbsm-1','10', 'TBSM','X TBSM 1',36),
-('cls-10-tbsm-2','10', 'TBSM','X TBSM 2',36),
-('cls-10-mplb-1','10', 'MPLB','X MPLB 1',36),
-('cls-10-mplb-2','10', 'MPLB','X MPLB 2',36),
-('cls-10-ak-1',  '10', 'AK',  'X AK 1',  36),
-('cls-10-ak-2',  '10', 'AK',  'X AK 2',  36),
-('cls-10-tei-1', '10', 'TEI', 'X TEI 1', 36),
-('cls-10-tei-2', '10', 'TEI', 'X TEI 2', 36),
-('cls-10-titl-1','10', 'TITL','X TITL 1',36),
-('cls-10-titl-2','10', 'TITL','X TITL 2',36),
+-- Kelas 10 (14 rombel)
+('cls-10-tkj-1', '10', 'TKJ',  'X TKJ 1',  36),
+('cls-10-tkj-2', '10', 'TKJ',  'X TKJ 2',  36),
+('cls-10-tsm',   '10', 'TSM',  'X TSM',    36),
+('cls-10-tkro-1','10', 'TKRO', 'X TKRO 1', 36),
+('cls-10-tkro-2','10', 'TKRO', 'X TKRO 2', 36),
+('cls-10-tbsm-1','10', 'TBSM', 'X TBSM',   36),
+('cls-10-mplb-1','10', 'MPLB', 'X MPLB 1', 36),
+('cls-10-mplb-2','10', 'MPLB', 'X MPLB 2', 36),
+('cls-10-ak-1',  '10', 'AK',   'X AK 1',   36),
+('cls-10-ak-2',  '10', 'AK',   'X AK 2',   36),
+('cls-10-tei-1', '10', 'TEI',  'X TEI 1',  36),
+('cls-10-tei-2', '10', 'TEI',  'X TEI 2',  36),
+('cls-10-titl-1','10', 'TITL', 'X TITL 1', 36),
+('cls-10-titl-2','10', 'TITL', 'X TITL 2', 36),
 
--- Kelas 11 (15 rombel)
-('cls-11-tkj-1', '11', 'TKJ', 'XI TKJ 1', 36),
-('cls-11-tkj-2', '11', 'TKJ', 'XI TKJ 2', 36),
-('cls-11-tsm',   '11', 'TSM', 'XI TSM',   36),
-('cls-11-tkro-1','11', 'TKRO','XI TKRO 1',36),
-('cls-11-tkro-2','11', 'TKRO','XI TKRO 2',36),
-('cls-11-tbsm-1','11', 'TBSM','XI TBSM 1',36),
-('cls-11-tbsm-2','11', 'TBSM','XI TBSM 2',36),
-('cls-11-mplb-1','11', 'MPLB','XI MPLB 1',36),
-('cls-11-mplb-2','11', 'MPLB','XI MPLB 2',36),
-('cls-11-ak-1',  '11', 'AK',  'XI AK 1',  36),
-('cls-11-ak-2',  '11', 'AK',  'XI AK 2',  36),
-('cls-11-tei-1', '11', 'TEI', 'XI TEI 1', 36),
-('cls-11-tei-2', '11', 'TEI', 'XI TEI 2', 36),
-('cls-11-titl-1','11', 'TITL','XI TITL 1',36),
-('cls-11-titl-2','11', 'TITL','XI TITL 2',36)
+-- Kelas 11 (14 rombel)
+('cls-11-tkj-1', '11', 'TKJ',  'XI TKJ 1',  36),
+('cls-11-tkj-2', '11', 'TKJ',  'XI TKJ 2',  36),
+('cls-11-tsm',   '11', 'TSM',  'XI TSM',    36),
+('cls-11-tkro-1','11', 'TKRO', 'XI TKRO 1', 36),
+('cls-11-tkro-2','11', 'TKRO', 'XI TKRO 2', 36),
+('cls-11-tbsm-1','11', 'TBSM', 'XI TBSM',   36),
+('cls-11-mplb-1','11', 'MPLB', 'XI MPLB 1', 36),
+('cls-11-mplb-2','11', 'MPLB', 'XI MPLB 2', 36),
+('cls-11-ak-1',  '11', 'AK',   'XI AK 1',   36),
+('cls-11-ak-2',  '11', 'AK',   'XI AK 2',   36),
+('cls-11-tei-1', '11', 'TEI',  'XI TEI 1',  36),
+('cls-11-tei-2', '11', 'TEI',  'XI TEI 2',  36),
+('cls-11-titl-1','11', 'TITL', 'XI TITL 1', 36),
+('cls-11-titl-2','11', 'TITL', 'XI TITL 2', 36),
+
+-- Kelas 12 (14 rombel)
+('cls-12-tkj-1', '12', 'TKJ',  'XII TKJ 1',  36),
+('cls-12-tkj-2', '12', 'TKJ',  'XII TKJ 2',  36),
+('cls-12-tsm',   '12', 'TSM',  'XII TSM',    36),
+('cls-12-tkro-1','12', 'TKRO', 'XII TKRO 1', 36),
+('cls-12-tkro-2','12', 'TKRO', 'XII TKRO 2', 36),
+('cls-12-tbsm',  '12', 'TBSM', 'XII TBSM',   36),
+('cls-12-mplb-1','12', 'MPLB', 'XII MPLB 1', 36),
+('cls-12-mplb-2','12', 'MPLB', 'XII MPLB 2', 36),
+('cls-12-ak-1',  '12', 'AK',   'XII AK 1',   36),
+('cls-12-ak-2',  '12', 'AK',   'XII AK 2',   36),
+('cls-12-tei-1', '12', 'TEI',  'XII TEI 1',  36),
+('cls-12-tei-2', '12', 'TEI',  'XII TEI 2',  36),
+('cls-12-titl-1','12', 'TITL', 'XII TITL 1', 36),
+('cls-12-titl-2','12', 'TITL', 'XII TITL 2', 36)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     major = EXCLUDED.major,
