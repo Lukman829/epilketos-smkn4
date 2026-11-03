@@ -21,9 +21,11 @@ export interface Candidate {
   display_order: number;
 }
 
+export type Grade = '10' | '11' | '12';
+
 export interface ClassRecord {
   id: string;
-  grade: '10' | '11';
+  grade: Grade;
   major: string;
   name: string;
   voter_quota: number;

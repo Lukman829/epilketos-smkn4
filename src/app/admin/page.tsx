@@ -53,7 +53,7 @@ export default function AdminDashboardPage() {
 
   // Filter & sorting states for Class Participation
   const [searchClass, setSearchClass] = useState('');
-  const [filterGrade, setFilterGrade] = useState<'all' | '10' | '11'>('all');
+  const [filterGrade, setFilterGrade] = useState<'all' | '10' | '11' | '12'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'low' | 'mid' | 'high'>('all');
   const [sortOrder, setSortOrder] = useState<'lowest' | 'highest' | 'name'>('lowest');
 
@@ -110,6 +110,9 @@ export default function AdminDashboardPage() {
           return false;
         }
         if (filterGrade === '11' && !cls.name.toUpperCase().startsWith('XI ') && !cls.name.toUpperCase().startsWith('11')) {
+          return false;
+        }
+        if (filterGrade === '12' && !cls.name.toUpperCase().startsWith('XII ') && !cls.name.toUpperCase().startsWith('12')) {
           return false;
         }
         if (filterStatus === 'low' && cls.turnout_percentage >= 50) return false;
@@ -386,6 +389,15 @@ export default function AdminDashboardPage() {
                 }`}
               >
                 Kelas 11
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterGrade('12')}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                  filterGrade === '12' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Kelas 12
               </button>
             </div>
           </div>

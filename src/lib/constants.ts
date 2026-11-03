@@ -14,7 +14,7 @@ export const SCHOOL_MAJORS = [
   { code: 'TKJ', name: 'Teknik Komputer dan Jaringan', rombelPerGrade: 2 },
   { code: 'TSM', name: 'Teknik Sepeda Motor', rombelPerGrade: 1 },
   { code: 'TKRO', name: 'Teknik Kendaraan Ringan Otomotif', rombelPerGrade: 2 },
-  { code: 'TBSM', name: 'Teknik dan Bisnis Sepeda Motor', rombelPerGrade: 2 },
+  { code: 'TBSM', name: 'Teknik dan Bisnis Sepeda Motor', rombelPerGrade: 1 },
   { code: 'MPLB', name: 'Manajemen Perkantoran dan Layanan Bisnis', rombelPerGrade: 2 },
   { code: 'AK', name: 'Akuntansi', rombelPerGrade: 2 },
   { code: 'TEI', name: 'Teknik Elektronika Industri', rombelPerGrade: 2 },
@@ -128,7 +128,7 @@ export const INITIAL_CANDIDATES: Candidate[] = [
     type: 'wakil',
     candidate_number: 2,
     name: 'Nabila Zahra Choirunissa',
-    grade_major: 'X TBSM 1 (Teknik & Bisnis Sepeda Motor)',
+    grade_major: 'X TBSM (Teknik & Bisnis Sepeda Motor)',
     tagline: 'Sinergi Empati, Gerak Terukur untuk Hasil Maksimal',
     photo_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80',
     vision: 'Menjadi jembatan komunikasi yang harmonis antar angkatan dan memperkuat nilai kekeluargaan di sekolah.',
@@ -216,14 +216,13 @@ export const INITIAL_CANDIDATES: Candidate[] = [
 ];
 
 export const INITIAL_CLASSES: ClassRecord[] = [
-  // Kelas 10 (15 rombel x 36 siswa = 540 siswa)
+  // Kelas 10 (14 rombel x 36 siswa = 504 siswa)
   { id: 'cls-10-tkj-1', grade: '10', major: 'TKJ', name: 'X TKJ 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-10-tkj-2', grade: '10', major: 'TKJ', name: 'X TKJ 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-10-tsm', grade: '10', major: 'TSM', name: 'X TSM', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-10-tkro-1', grade: '10', major: 'TKRO', name: 'X TKRO 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-10-tkro-2', grade: '10', major: 'TKRO', name: 'X TKRO 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
-  { id: 'cls-10-tbsm-1', grade: '10', major: 'TBSM', name: 'X TBSM 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
-  { id: 'cls-10-tbsm-2', grade: '10', major: 'TBSM', name: 'X TBSM 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-10-tbsm-1', grade: '10', major: 'TBSM', name: 'X TBSM', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-10-mplb-1', grade: '10', major: 'MPLB', name: 'X MPLB 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-10-mplb-2', grade: '10', major: 'MPLB', name: 'X MPLB 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-10-ak-1', grade: '10', major: 'AK', name: 'X AK 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
@@ -233,14 +232,13 @@ export const INITIAL_CLASSES: ClassRecord[] = [
   { id: 'cls-10-titl-1', grade: '10', major: 'TITL', name: 'X TITL 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-10-titl-2', grade: '10', major: 'TITL', name: 'X TITL 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
 
-  // Kelas 11 (15 rombel x 36 siswa = 540 siswa)
+  // Kelas 11 (14 rombel x 36 siswa = 504 siswa)
   { id: 'cls-11-tkj-1', grade: '11', major: 'TKJ', name: 'XI TKJ 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-11-tkj-2', grade: '11', major: 'TKJ', name: 'XI TKJ 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-11-tsm', grade: '11', major: 'TSM', name: 'XI TSM', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-11-tkro-1', grade: '11', major: 'TKRO', name: 'XI TKRO 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-11-tkro-2', grade: '11', major: 'TKRO', name: 'XI TKRO 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
-  { id: 'cls-11-tbsm-1', grade: '11', major: 'TBSM', name: 'XI TBSM 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
-  { id: 'cls-11-tbsm-2', grade: '11', major: 'TBSM', name: 'XI TBSM 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-11-tbsm-1', grade: '11', major: 'TBSM', name: 'XI TBSM', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-11-mplb-1', grade: '11', major: 'MPLB', name: 'XI MPLB 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-11-mplb-2', grade: '11', major: 'MPLB', name: 'XI MPLB 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-11-ak-1', grade: '11', major: 'AK', name: 'XI AK 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
@@ -249,4 +247,20 @@ export const INITIAL_CLASSES: ClassRecord[] = [
   { id: 'cls-11-tei-2', grade: '11', major: 'TEI', name: 'XI TEI 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-11-titl-1', grade: '11', major: 'TITL', name: 'XI TITL 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
   { id: 'cls-11-titl-2', grade: '11', major: 'TITL', name: 'XI TITL 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+
+  // Kelas 12 (14 rombel x 36 siswa = 504 siswa)
+  { id: 'cls-12-tkj-1', grade: '12', major: 'TKJ', name: 'XII TKJ 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-tkj-2', grade: '12', major: 'TKJ', name: 'XII TKJ 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-tsm', grade: '12', major: 'TSM', name: 'XII TSM', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-tkro-1', grade: '12', major: 'TKRO', name: 'XII TKRO 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-tkro-2', grade: '12', major: 'TKRO', name: 'XII TKRO 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-tbsm', grade: '12', major: 'TBSM', name: 'XII TBSM', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-mplb-1', grade: '12', major: 'MPLB', name: 'XII MPLB 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-mplb-2', grade: '12', major: 'MPLB', name: 'XII MPLB 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-ak-1', grade: '12', major: 'AK', name: 'XII AK 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-ak-2', grade: '12', major: 'AK', name: 'XII AK 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-tei-1', grade: '12', major: 'TEI', name: 'XII TEI 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-tei-2', grade: '12', major: 'TEI', name: 'XII TEI 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-titl-1', grade: '12', major: 'TITL', name: 'XII TITL 1', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
+  { id: 'cls-12-titl-2', grade: '12', major: 'TITL', name: 'XII TITL 2', voter_quota: 36, tokens_generated: 36, voted_count: 0 },
 ];
