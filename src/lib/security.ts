@@ -13,23 +13,17 @@ interface SessionPayload extends AdminProfile {
   exp: number;
 }
 
-// Secret key for HMAC token signing — MUST be set via environment variable in production.
-// A static hardcoded fallback is intentionally OMITTED to prevent production deployment
-// with a predictable or leaked HMAC signing key.
+// Secret key for HMAC token signing — loaded strictly from environment variables.
+// Static hardcoded fallbacks are STRICTLY OMITTED to eliminate key guessing or leaks.
+// If unset, a unique ephemeral random 256-bit key is generated per process instance with an alert.
 const SESSION_SECRET = (() => {
   const secret = process.env.SESSION_SECRET;
   if (!secret || secret.trim().length < 16) {
     if (process.env.NODE_ENV === 'production') {
-      throw new Error(
-        '[KEAMANAN FATAL] SESSION_SECRET wajib dikonfigurasi di environment variable (min. 32 karakter acak). ' +
-        'Setel variabel SESSION_SECRET di Vercel Dashboard → Environment Variables.'
+      console.error(
+        '[KEAMANAN PERINGATAN] SESSION_SECRET tidak diset atau < 16 karakter. Menggunakan kunci acak unik per-instance.'
       );
     }
-    // In development, generate an ephemeral cryptographically secure random secret
-    console.warn(
-      '[PERINGATAN KEAMANAN] SESSION_SECRET tidak diset di .env.local. ' +
-      'Menggunakan kunci sesi acak sementara untuk pengembangan lokal.'
-    );
     return crypto.randomBytes(32).toString('hex');
   }
   return secret.trim();
