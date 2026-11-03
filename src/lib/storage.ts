@@ -23,19 +23,22 @@ export function hashToken(token: string): string {
 }
 
 // Generate cryptographically secure random token (Format: PLK-XXXX-YYYY)
+// Uses crypto.randomInt to eliminate modulo bias completely
 export function generateSecureToken(): string {
   // Safe characters (avoid 0, O, 1, I to eliminate reading ambiguity on printed sheets)
   const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
   const getRand = (len: number) => {
     let result = '';
-    const bytes = crypto.randomBytes(len);
     for (let i = 0; i < len; i++) {
-      result += chars[bytes[i] % chars.length];
+      result += chars[crypto.randomInt(0, chars.length)];
     }
     return result;
   };
   return `PLK-${getRand(4)}-${getRand(4)}`;
 }
+
+// In-memory mutex locks to prevent TOCTOU race conditions during simultaneous vote submissions
+const activeVotingLocks = new Set<string>();
 
 // Global In-Memory state for Next.js server instance
 interface ElectionStore {
@@ -94,10 +97,10 @@ export function initStoreIfNeeded() {
       const preview = `${plainToken.slice(0, 7)}***${plainToken.slice(-2)}`;
 
       initialTokens.push({
-        id: `tok-${cls.id}-${i + 1}`,
+        id: `tok-${cls.id}-${crypto.randomUUID()}`,
         token_hash: hash,
         token_preview: preview,
-        plain_token: plainToken,
+        plain_token: undefined, // Never store plain token in memory
         class_id: cls.id,
         class_name: cls.name,
         batch_id: batchId,
@@ -116,7 +119,7 @@ export function initStoreIfNeeded() {
 
   // Add initial system audit log
   store.auditLogs.unshift({
-    id: `log-${Date.now()}`,
+    id: `log-${crypto.randomUUID()}`,
     action: 'SYSTEM_INITIALIZATION',
     actor: 'Panitia Pelaksana SMKN 4 Kota Serang',
     details: {
@@ -208,7 +211,7 @@ export function validateTokenStatus(tokenString: string): {
   };
 }
 
-// Cast Vote Atomic RPC
+// Cast Vote Atomic RPC (with mutex locking against race conditions)
 export function castVote(
   tokenString: string,
   candidateKetuaId: string,
@@ -222,87 +225,102 @@ export function castVote(
     };
   }
 
-  // 2. Validate token
+  // 2. Validate token & acquire atomic memory lock for this token hash
   const hash = hashToken(tokenString);
-  const tokenIndex = store.tokens.findIndex((t) => t.token_hash === hash);
 
-  if (tokenIndex === -1) {
+  if (activeVotingLocks.has(hash)) {
     return {
       success: false,
-      error: 'Token pemilihan tidak valid.',
+      error: 'Transaksi pemungutan suara sedang diproses untuk token ini. Mohon tunggu.',
     };
   }
 
-  const tokenRecord = store.tokens[tokenIndex];
+  activeVotingLocks.add(hash);
 
-  if (tokenRecord.status !== 'active') {
-    if (tokenRecord.status === 'used') {
+  try {
+    const tokenIndex = store.tokens.findIndex((t) => t.token_hash === hash);
+
+    if (tokenIndex === -1) {
       return {
         success: false,
-        error: 'Token sudah pernah digunakan.',
+        error: 'Token pemilihan tidak valid.',
       };
     }
-    return {
-      success: false,
-      error: 'Token telah dibatalkan oleh panitia.',
+
+    const tokenRecord = store.tokens[tokenIndex];
+
+    if (tokenRecord.status !== 'active') {
+      if (tokenRecord.status === 'used') {
+        return {
+          success: false,
+          error: 'Token sudah pernah digunakan.',
+        };
+      }
+      return {
+        success: false,
+        error: 'Token telah dibatalkan oleh panitia.',
+      };
+    }
+
+    // 3. Validate candidates
+    const ketua = store.candidates.find(
+      (c) => c.id === candidateKetuaId && c.is_active && c.type === 'ketua'
+    );
+    if (!ketua) {
+      return {
+        success: false,
+        error: 'Pilihan Calon Ketua OSIS tidak valid atau tidak terdaftar aktif.',
+      };
+    }
+
+    const wakil = store.candidates.find(
+      (c) => c.id === candidateWakilId && c.is_active && c.type === 'wakil'
+    );
+    if (!wakil) {
+      return {
+        success: false,
+        error: 'Pilihan Calon Wakil Ketua OSIS tidak valid atau tidak terdaftar aktif.',
+      };
+    }
+
+    // 4. Atomic transaction:
+    const now = new Date().toISOString();
+
+    // Mark token used and purge plain_token immediately to prevent any plain token retention
+    store.tokens[tokenIndex] = {
+      ...tokenRecord,
+      status: 'used',
+      used_at: now,
+      plain_token: undefined,
     };
-  }
 
-  // 3. Validate candidates
-  const ketua = store.candidates.find(
-    (c) => c.id === candidateKetuaId && c.is_active && c.type === 'ketua'
-  );
-  if (!ketua) {
+    // Increment class participation count anonymously
+    const classIndex = store.classes.findIndex((c) => c.id === tokenRecord.class_id);
+    if (classIndex !== -1) {
+      store.classes[classIndex].voted_count += 1;
+    }
+
+    // Insert Anonymous Ballot (NO reference to token_id, class_id, or student!)
+    // Cryptographic privacy protection against side-channel correlation:
+    // 1. Ballot timestamp is bucketed to the hour to eliminate millisecond timestamp matching
+    // 2. Ballot is inserted at a randomized index to eliminate sequential array order correlation
+    const ballotId = `blt-${crypto.randomUUID()}`;
+    const hourBucketTimestamp = new Date(Math.floor(Date.now() / 3600000) * 3600000).toISOString();
+    const randomInsertPos = Math.floor(Math.random() * (store.ballots.length + 1));
+    store.ballots.splice(randomInsertPos, 0, {
+      id: ballotId,
+      candidate_ketua_id: candidateKetuaId,
+      candidate_wakil_id: candidateWakilId,
+      created_at: hourBucketTimestamp,
+    });
+
     return {
-      success: false,
-      error: 'Pilihan Calon Ketua OSIS tidak valid atau tidak terdaftar aktif.',
+      success: true,
+      timestamp: now,
     };
+  } finally {
+    activeVotingLocks.delete(hash);
   }
-
-  const wakil = store.candidates.find(
-    (c) => c.id === candidateWakilId && c.is_active && c.type === 'wakil'
-  );
-  if (!wakil) {
-    return {
-      success: false,
-      error: 'Pilihan Calon Wakil Ketua OSIS tidak valid atau tidak terdaftar aktif.',
-    };
-  }
-
-  // 4. Atomic transaction:
-  const now = new Date().toISOString();
-
-  // Mark token used
-  store.tokens[tokenIndex] = {
-    ...tokenRecord,
-    status: 'used',
-    used_at: now,
-  };
-
-  // Increment class participation count anonymously
-  const classIndex = store.classes.findIndex((c) => c.id === tokenRecord.class_id);
-  if (classIndex !== -1) {
-    store.classes[classIndex].voted_count += 1;
-  }
-
-  // Insert Anonymous Ballot (NO reference to token_id, class_id, or student!)
-  // Cryptographic privacy protection against side-channel correlation:
-  // 1. Ballot timestamp is bucketed to the hour to eliminate millisecond timestamp matching
-  // 2. Ballot is inserted at a randomized index to eliminate sequential array order correlation
-  const ballotId = `blt-${crypto.randomUUID()}`;
-  const hourBucketTimestamp = new Date(Math.floor(Date.now() / 3600000) * 3600000).toISOString();
-  const randomInsertPos = Math.floor(Math.random() * (store.ballots.length + 1));
-  store.ballots.splice(randomInsertPos, 0, {
-    id: ballotId,
-    candidate_ketua_id: candidateKetuaId,
-    candidate_wakil_id: candidateWakilId,
-    created_at: hourBucketTimestamp,
-  });
-
-  return {
-    success: true,
-    timestamp: now,
-  };
 }
 
 // Public or Admin Results
@@ -396,7 +414,7 @@ export function adminUpdateSettings(
   store.settings = { ...store.settings, ...updates };
 
   store.auditLogs.unshift({
-    id: `log-${Date.now()}`,
+    id: `log-${crypto.randomUUID()}`,
     action: 'UPDATE_ELECTION_SETTINGS',
     actor,
     details: { updates },
@@ -413,7 +431,7 @@ export function adminToggleElectionStatus(
   store.settings.status = newStatus;
 
   store.auditLogs.unshift({
-    id: `log-${Date.now()}`,
+    id: `log-${crypto.randomUUID()}`,
     action: 'CHANGE_ELECTION_STATUS',
     actor,
     details: { new_status: newStatus },
@@ -429,7 +447,7 @@ export function adminPublishResults(published: boolean, actor: string): Election
   store.settings.results_published_by = published ? actor : null;
 
   store.auditLogs.unshift({
-    id: `log-${Date.now()}`,
+    id: `log-${crypto.randomUUID()}`,
     action: published ? 'PUBLISH_RESULTS' : 'UNPUBLISH_RESULTS',
     actor,
     details: { is_published: published },
@@ -447,7 +465,7 @@ export function adminGenerateBatchTokens(
   const cls = store.classes.find((c) => c.id === classId);
   if (!cls) throw new Error('Kelas tidak ditemukan');
 
-  const batchId = `batch-${Date.now()}`;
+  const batchId = `batch-${crypto.randomUUID()}`;
   const batchName = `Batch Distribusi - ${cls.name}`;
 
   const newBatch: TokenBatch = {
@@ -469,7 +487,7 @@ export function adminGenerateBatchTokens(
     const preview = `${plain.slice(0, 7)}***${plain.slice(-2)}`;
 
     const tokenRecord: VotingToken = {
-      id: `tok-${Date.now()}-${i}`,
+      id: `tok-${crypto.randomUUID()}`,
       token_hash: hash,
       token_preview: preview,
       plain_token: plain,
@@ -493,7 +511,7 @@ export function adminGenerateBatchTokens(
   store.batches.unshift(newBatch);
 
   store.auditLogs.unshift({
-    id: `log-${Date.now()}`,
+    id: `log-${crypto.randomUUID()}`,
     action: 'GENERATE_TOKEN_BATCH',
     actor,
     details: { class_name: cls.name, count, batch_id: batchId },
@@ -523,6 +541,7 @@ export function adminRevokeToken(
   token.status = 'revoked';
   token.revoked_at = now;
   token.revoked_reason = reason;
+  token.plain_token = undefined; // Wipe plaintext token immediately upon revocation
 
   let replacementTokenPlain: string | undefined = undefined;
   let replacementRecord: VotingToken | undefined = undefined;
@@ -531,7 +550,7 @@ export function adminRevokeToken(
     const plain = generateSecureToken();
     const hash = hashToken(plain);
     const preview = `${plain.slice(0, 7)}***${plain.slice(-2)}`;
-    const replacementId = `tok-rep-${Date.now()}`;
+    const replacementId = `tok-rep-${crypto.randomUUID()}`;
 
     const newToken: VotingToken = {
       id: replacementId,
@@ -556,7 +575,7 @@ export function adminRevokeToken(
   }
 
   store.auditLogs.unshift({
-    id: `log-${Date.now()}`,
+    id: `log-${crypto.randomUUID()}`,
     action: 'REVOKE_TOKEN',
     actor,
     details: {
@@ -579,7 +598,7 @@ export function adminSaveCandidate(candidate: Candidate, actor: string): Candida
   if (index >= 0) {
     store.candidates[index] = { ...candidate };
     store.auditLogs.unshift({
-      id: `log-${Date.now()}`,
+      id: `log-${crypto.randomUUID()}`,
       action: 'UPDATE_CANDIDATE',
       actor,
       details: { candidate_name: candidate.name, type: candidate.type },
@@ -588,7 +607,7 @@ export function adminSaveCandidate(candidate: Candidate, actor: string): Candida
   } else {
     store.candidates.push({ ...candidate });
     store.auditLogs.unshift({
-      id: `log-${Date.now()}`,
+      id: `log-${crypto.randomUUID()}`,
       action: 'CREATE_CANDIDATE',
       actor,
       details: { candidate_name: candidate.name, type: candidate.type },
@@ -606,7 +625,7 @@ export function adminDeleteCandidate(id: string, actor: string): boolean {
   store.candidates.splice(index, 1);
 
   store.auditLogs.unshift({
-    id: `log-${Date.now()}`,
+    id: `log-${crypto.randomUUID()}`,
     action: 'DELETE_CANDIDATE',
     actor,
     details: { candidate_name: candidate.name },
@@ -626,7 +645,7 @@ export function adminSaveClass(classItem: ClassRecord, actor: string): ClassReco
   }
 
   store.auditLogs.unshift({
-    id: `log-${Date.now()}`,
+    id: `log-${crypto.randomUUID()}`,
     action: 'UPDATE_CLASS',
     actor,
     details: { class_name: classItem.name, quota: classItem.voter_quota },
@@ -643,7 +662,7 @@ export function recordAuditLog(
 ): AuditLog {
   initStoreIfNeeded();
   const log: AuditLog = {
-    id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    id: `log-${crypto.randomUUID()}`,
     action,
     actor,
     details,

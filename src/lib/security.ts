@@ -13,12 +13,27 @@ interface SessionPayload extends AdminProfile {
   exp: number;
 }
 
-// Secret key for HMAC token signing
-const SESSION_SECRET =
-  process.env.SESSION_SECRET ||
-  process.env.ADMIN_PASSWORD ||
-  process.env.ADMIN_UTAMA_PASSWORD ||
-  'smkn4-epilketos-super-secret-hmac-key-2026';
+// Secret key for HMAC token signing — MUST be set via environment variable in production.
+// A static hardcoded fallback is intentionally OMITTED to prevent production deployment
+// with a predictable or leaked HMAC signing key.
+const SESSION_SECRET = (() => {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.trim().length < 16) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        '[KEAMANAN FATAL] SESSION_SECRET wajib dikonfigurasi di environment variable (min. 32 karakter acak). ' +
+        'Setel variabel SESSION_SECRET di Vercel Dashboard → Environment Variables.'
+      );
+    }
+    // In development, generate an ephemeral cryptographically secure random secret
+    console.warn(
+      '[PERINGATAN KEAMANAN] SESSION_SECRET tidak diset di .env.local. ' +
+      'Menggunakan kunci sesi acak sementara untuk pengembangan lokal.'
+    );
+    return crypto.randomBytes(32).toString('hex');
+  }
+  return secret.trim();
+})();
 
 function base64UrlEncode(str: string | Buffer): string {
   const buf = typeof str === 'string' ? Buffer.from(str) : str;
@@ -330,37 +345,99 @@ export function rateLimit(
 
 /**
  * Safe client IP extraction with trusted reverse-proxy priority (Vercel / Cloudflare)
+ * Defends against IP spoofing via forged X-Forwarded-For or X-Real-IP headers.
  */
 export function getClientIp(req: NextRequest): string {
-  // 1. Vercel edge trusted header (cannot be spoofed by incoming client HTTP headers)
+  // 1. Vercel edge trusted header (injected by Vercel infrastructure; client headers stripped)
   const xVercelIp = req.headers.get('x-vercel-forwarded-for');
   if (xVercelIp) {
     const ip = xVercelIp.split(',')[0].trim();
     if (/^[0-9a-fA-F:.]+$/.test(ip)) return ip;
   }
 
-  // 2. Cloudflare connecting IP
+  // 2. Cloudflare connecting IP (trusted when behind Cloudflare proxy)
   const cfConnectingIp = req.headers.get('cf-connecting-ip');
   if (cfConnectingIp && /^[0-9a-fA-F:.]+$/.test(cfConnectingIp.trim())) {
     return cfConnectingIp.trim();
   }
 
-  // 3. Reverse proxy real IP
+  // 3. If deployed on Vercel but x-vercel-forwarded-for was missing, do NOT trust arbitrary client headers
+  if (process.env.VERCEL) {
+    return '127.0.0.1';
+  }
+
+  // 4. Reverse proxy real IP (only in non-Vercel trusted environments)
   const xRealIp = req.headers.get('x-real-ip');
   if (xRealIp && /^[0-9a-fA-F:.]+$/.test(xRealIp.trim())) {
     return xRealIp.trim();
   }
 
-  // 4. Fallback x-forwarded-for
+  // 5. Fallback x-forwarded-for (use the rightmost/last proxy hop to resist client-side prepend spoofing)
   const xForwardedFor = req.headers.get('x-forwarded-for');
   if (xForwardedFor) {
-    const firstIp = xForwardedFor.split(',')[0].trim();
-    if (firstIp && /^[0-9a-fA-F:.]+$/.test(firstIp)) {
-      return firstIp;
+    const hops = xForwardedFor.split(',').map((s) => s.trim()).filter(Boolean);
+    const lastHop = hops[hops.length - 1];
+    if (lastHop && /^[0-9a-fA-F:.]+$/.test(lastHop)) {
+      return lastHop;
     }
   }
 
   return '127.0.0.1';
+}
+
+/**
+ * Validate candidate photo URL to prevent SSRF and stored XSS attacks
+ */
+export function validateCandidatePhotoUrl(url: string): { valid: boolean; sanitizedUrl: string; error?: string } {
+  if (!url || typeof url !== 'string') {
+    return { valid: true, sanitizedUrl: '' };
+  }
+
+  const clean = url.trim();
+  if (!clean) {
+    return { valid: true, sanitizedUrl: '' };
+  }
+
+  // Disallow dangerous schemes immediately
+  if (/^(javascript|vbscript|data|file):/i.test(clean)) {
+    return { valid: false, sanitizedUrl: '', error: 'Skema URL tidak aman (hanya HTTPS atau path lokal yang diizinkan).' };
+  }
+
+  // Allow local relative paths starting with /
+  if (clean.startsWith('/') && !clean.startsWith('//')) {
+    return { valid: true, sanitizedUrl: clean.slice(0, 500) };
+  }
+
+  // Must be HTTPS for external resources
+  if (!clean.startsWith('https://')) {
+    return { valid: false, sanitizedUrl: '', error: 'URL foto harus menggunakan protokol aman HTTPS.' };
+  }
+
+  try {
+    const parsed = new URL(clean);
+    const host = parsed.hostname.toLowerCase();
+
+    // Prevent SSRF to localhost or internal network / cloud metadata
+    const isPrivateOrLoopback =
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '0.0.0.0' ||
+      host === '169.254.169.254' || // AWS / GCP / Cloud metadata
+      host === 'metadata.google.internal' ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host) ||
+      host.endsWith('.local') ||
+      host.endsWith('.internal');
+
+    if (isPrivateOrLoopback) {
+      return { valid: false, sanitizedUrl: '', error: 'Alamat URL foto merujuk ke jaringan lokal atau privat (SSRF Protection).' };
+    }
+
+    return { valid: true, sanitizedUrl: parsed.toString().slice(0, 500) };
+  } catch {
+    return { valid: false, sanitizedUrl: '', error: 'Format URL foto tidak valid.' };
+  }
 }
 
 /**

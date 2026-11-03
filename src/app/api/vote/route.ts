@@ -78,8 +78,9 @@ export async function POST(req: NextRequest) {
       });
 
       if (error) {
+        console.error('[SECURITY/VOTE_RPC_ERROR]', error.message);
         return NextResponse.json(
-          { success: false, error: error.message },
+          { success: false, error: 'Gagal memproses suara. Pastikan token Anda valid dan sesi pemilihan dibuka.' },
           { status: 400 }
         );
       }

@@ -10,6 +10,7 @@ import {
   sanitizeString,
 } from '@/lib/security';
 import { recordAuditLog } from '@/lib/storage';
+import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 
 interface AdminAccountConfig {
   username: string;
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. IP-Based Brute-Force Lockout Check (5 failed attempts per IP)
+    // 2. IP-Based Brute-Force Lockout Check (In-Memory + Persistent DB Verification)
     const ipLockout = checkLoginLockout(`ip:${clientIp}`);
     if (ipLockout.locked) {
       return NextResponse.json(
@@ -81,6 +82,31 @@ export async function POST(req: NextRequest) {
         },
         { status: 429 }
       );
+    }
+
+    // Persistent database check across serverless cold starts / multi-instance deployments
+    if (isSupabaseConfigured && supabaseAdmin) {
+      try {
+        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+        const { data: recentFailures } = await supabaseAdmin
+          .from('audit_logs')
+          .select('id')
+          .eq('action', 'ADMIN_LOGIN_FAILED')
+          .eq('ip_address', clientIp)
+          .gte('created_at', fifteenMinutesAgo);
+
+        if (recentFailures && recentFailures.length >= 5) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Alamat IP ini diblokir sementara karena terlalu banyak percobaan masuk yang salah. Silakan coba kembali dalam 15 menit.',
+            },
+            { status: 429 }
+          );
+        }
+      } catch {
+        // Fallback to in-memory check if DB read fails
+      }
     }
 
     const body = await req.json();
@@ -136,6 +162,21 @@ export async function POST(req: NextRequest) {
         remaining_attempts: remainingAttempts,
         timestamp: new Date().toISOString(),
       });
+
+      // Persist failed attempt to database for multi-instance / serverless resilience
+      if (isSupabaseConfigured && supabaseAdmin) {
+        try {
+          await supabaseAdmin.from('audit_logs').insert({
+            action: 'ADMIN_LOGIN_FAILED',
+            actor: 'Sistem Keamanan',
+            ip_address: clientIp,
+            details: {
+              attempted_username: cleanUsername.slice(0, 50),
+              remaining_attempts: remainingAttempts,
+            },
+          });
+        } catch {}
+      }
 
       const errorMessage =
         remainingAttempts === 0

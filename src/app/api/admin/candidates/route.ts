@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminFromRequest, sanitizeString } from '@/lib/security';
+import crypto from 'crypto';
+import { getAdminFromRequest, sanitizeString, validateCandidatePhotoUrl } from '@/lib/security';
 import {
   getAllCandidates,
   adminSaveCandidate,
@@ -65,14 +66,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate and sanitize candidate photo URL (SSRF & XSS guard)
+    const photoValidation = validateCandidatePhotoUrl(String(body.photo_url || ''));
+    if (!photoValidation.valid) {
+      return NextResponse.json(
+        { success: false, error: photoValidation.error || 'URL foto kandidat tidak valid.' },
+        { status: 400 }
+      );
+    }
+
     // Sanitize user-provided text to prevent stored XSS
     const sanitizedCandidate = {
       ...body,
-      id: sanitizeString(String(body.id || `cand-${Date.now()}`), 50),
+      id: sanitizeString(String(body.id || `cand-${crypto.randomUUID()}`), 50),
       name: sanitizeString(String(body.name), 100),
       grade_major: sanitizeString(String(body.grade_major || ''), 100),
       tagline: sanitizeString(String(body.tagline || ''), 200),
-      photo_url: String(body.photo_url || '').trim().slice(0, 500),
+      photo_url: photoValidation.sanitizedUrl,
       vision: sanitizeString(String(body.vision), 500),
       missions: Array.isArray(body.missions)
         ? body.missions.map((m: unknown) => sanitizeString(String(m), 300)).filter(Boolean)

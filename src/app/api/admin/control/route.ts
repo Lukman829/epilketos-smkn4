@@ -4,7 +4,7 @@ import {
   adminToggleElectionStatus,
   adminPublishResults,
 } from '@/lib/storage';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,9 +27,9 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // 1. Persist to Supabase if configured
-      if (isSupabaseConfigured && supabase) {
-        await supabase.rpc('admin_toggle_status', {
+      // 1. Persist to Supabase with privileged admin client if configured
+      if (isSupabaseConfigured && supabaseAdmin) {
+        await supabaseAdmin.rpc('admin_toggle_status', {
           p_status: status,
           p_updated_by: admin.name,
         });
@@ -46,9 +46,9 @@ export async function POST(req: NextRequest) {
     if (action === 'publish_results') {
       const isPub = Boolean(is_published);
 
-      // 1. Persist to Supabase if configured
-      if (isSupabaseConfigured && supabase) {
-        await supabase.rpc('admin_publish_results', {
+      // 1. Persist to Supabase with privileged admin client if configured
+      if (isSupabaseConfigured && supabaseAdmin) {
+        await supabaseAdmin.rpc('admin_publish_results', {
           p_is_published: isPub,
           p_published_by: admin.name,
         });

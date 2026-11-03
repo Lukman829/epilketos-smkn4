@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateTokenStatus, hashToken } from '@/lib/storage';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase, supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 import { getClientIp, rateLimit, isValidTokenFormat } from '@/lib/security';
 
 export async function POST(req: NextRequest) {
@@ -43,9 +43,10 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Validate against Supabase PostgreSQL if configured
-    if (isSupabaseConfigured && supabase) {
+    const client = supabaseAdmin || supabase;
+    if (isSupabaseConfigured && client) {
       const hashed = hashToken(cleanToken);
-      const { data, error } = await supabase.rpc('validate_token', {
+      const { data, error } = await client.rpc('validate_token', {
         p_token_hash: hashed,
       });
 

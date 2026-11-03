@@ -5,7 +5,7 @@ import {
   adminGenerateBatchTokens,
   adminRevokeToken,
 } from '@/lib/storage';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status') || 'all';
 
     // 1. Fetch from Supabase if configured
-    if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.rpc('admin_get_tokens', {
+    if (isSupabaseConfigured && supabaseAdmin) {
+      const { data, error } = await supabaseAdmin.rpc('admin_get_tokens', {
         p_class_id: classId,
         p_status: status,
       });
@@ -54,7 +54,8 @@ export async function GET(req: NextRequest) {
       tokens: tokens.map((t) => ({
         id: t.id,
         preview: t.token_preview,
-        plain: t.plain_token || t.token_preview,
+        // Plain token is strictly masked unless active and plain is present
+        plain: t.status === 'active' && t.plain_token ? t.plain_token : t.token_preview,
         class_id: t.class_id,
         class_name: t.class_name,
         status: t.status,
@@ -95,17 +96,16 @@ export async function POST(req: NextRequest) {
     const result = adminGenerateBatchTokens(class_id, tokenCount, admin.name);
 
     // Persist to Supabase PostgreSQL if configured
-    if (isSupabaseConfigured && supabase) {
+    if (isSupabaseConfigured && supabaseAdmin) {
       const supaTokens = result.fullTokens.map((t) => ({
         id: t.id,
         token_hash: t.token_hash,
         token_preview: t.token_preview,
-        plain_token: t.plain_token,
         class_id: t.class_id,
         batch_id: t.batch_id,
       }));
 
-      await supabase.rpc('admin_generate_batch_tokens', {
+      await supabaseAdmin.rpc('admin_generate_batch_tokens', {
         p_batch_id: result.batch.id,
         p_batch_name: result.batch.batch_name,
         p_class_id: result.batch.class_id,
@@ -156,19 +156,18 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Persist revocation to Supabase PostgreSQL if configured
-    if (isSupabaseConfigured && supabase) {
+    if (isSupabaseConfigured && supabaseAdmin) {
       const replacementPayload = result.replacementRecord
         ? {
             id: result.replacementRecord.id,
             token_hash: result.replacementRecord.token_hash,
             token_preview: result.replacementRecord.token_preview,
-            plain_token: result.replacementRecord.plain_token,
             class_id: result.replacementRecord.class_id,
             batch_id: result.replacementRecord.batch_id,
           }
         : null;
 
-      await supabase.rpc('admin_revoke_token', {
+      await supabaseAdmin.rpc('admin_revoke_token', {
         p_token_id: token_id,
         p_reason: sanitizedReason,
         p_replacement: replacementPayload,

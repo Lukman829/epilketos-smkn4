@@ -8,7 +8,7 @@ import {
   getAuditLogs,
   store,
 } from '@/lib/storage';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,14 +21,14 @@ export async function GET(req: NextRequest) {
     }
 
     // 1. Fetch live metrics from Supabase if configured
-    if (isSupabaseConfigured && supabase) {
-      const { data: supaRes } = await supabase.rpc('get_election_results', { p_is_admin: true });
-      const { data: supaClasses } = await supabase
+    if (isSupabaseConfigured && supabaseAdmin) {
+      const { data: supaRes } = await supabaseAdmin.rpc('get_election_results', { p_is_admin: true });
+      const { data: supaClasses } = await supabaseAdmin
         .from('classes')
         .select('*')
         .in('major', ['TKJ', 'TSM', 'TKRO', 'TBSM', 'MPLB', 'AK', 'TEI', 'TITL'])
         .order('name');
-      const { data: supaAudit } = await supabase.rpc('admin_get_audit_logs', { p_limit: 15 });
+      const { data: supaAudit } = await supabaseAdmin.rpc('admin_get_audit_logs', { p_limit: 15 });
 
       if (supaRes && Array.isArray(supaClasses)) {
         const classStats = supaClasses.map((c: Partial<ClassRecord>) => ({
