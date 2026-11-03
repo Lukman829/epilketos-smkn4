@@ -88,19 +88,17 @@ ON CONFLICT (id) DO UPDATE SET
     voter_quota = EXCLUDED.voter_quota;
 
 -- Seed Demo Batch & Token untuk X TKJ 1
-INSERT INTO token_batches (id, batch_name, class_id, class_name, total_tokens, created_by)
-VALUES ('batch-cls-10-tkj-1', 'Batch Uji Coba Demo - X TKJ 1', 'cls-10-tkj-1', 'X TKJ 1', 5, 'Sistem Panitia')
+INSERT INTO token_batches (id, batch_name, class_id, total_tokens, created_by)
+VALUES ('batch-cls-10-tkj-1', 'Batch Uji Coba Demo - X TKJ 1', 'cls-10-tkj-1', 5, 'Sistem Panitia')
 ON CONFLICT (id) DO NOTHING;
 
 -- Demo token PLK-DEMO-2026 (SHA-256 hash)
-INSERT INTO voting_tokens (id, token_hash, token_preview, plain_token, class_id, class_name, batch_id, status)
+INSERT INTO voting_tokens (id, token_hash, token_preview, class_id, batch_id, status)
 VALUES (
     'tok-demo-2026',
     '3baec83344db6f5223c28df3f9547d0322ba6ee11b6d9e03d7c223c4a45a3ee3',
     'PLK-DEM***26',
-    'PLK-DEMO-2026',
     'cls-10-tkj-1',
-    'X TKJ 1',
     'batch-cls-10-tkj-1',
     'active'
 ) ON CONFLICT (id) DO NOTHING;

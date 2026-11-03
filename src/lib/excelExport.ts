@@ -1,5 +1,20 @@
 import * as XLSX from 'xlsx';
 
+/**
+ * Sanitizes cell values to prevent CSV / Spreadsheet Formula Injection (CWE-1236).
+ * Prepends a single quote `'` if the cell text starts with sensitive calculation characters (=, +, -, @).
+ */
+export function sanitizeSpreadsheetCell(value: string | number | undefined | null): string | number {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'number') return value;
+  const str = String(value);
+  const trimmed = str.trim();
+  if (/^[=+\-@]/.test(trimmed)) {
+    return `'${str}`;
+  }
+  return str;
+}
+
 export interface TokenExportItem {
   id: string;
   plain: string;
@@ -56,11 +71,11 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
     // R4: Banner Informasi Kelas (Merged A4:D4)
     ['INFORMASI KELAS & JADWAL PELAKSANAAN'],
     // R5: Meta 1
-    ['Nama Kelas:', className, 'Wali Kelas / Pendamping:', teacherNameDisplay],
+    ['Nama Kelas:', sanitizeSpreadsheetCell(className), 'Wali Kelas / Pendamping:', sanitizeSpreadsheetCell(teacherNameDisplay)],
     // R6: Meta 2
-    ['Alokasi DPT:', `${tokens.length} Siswa (Kuota: ${voterQuota})`, 'Hari, Tanggal Pemilihan:', electionDate],
+    ['Alokasi DPT:', `${tokens.length} Siswa (Kuota: ${voterQuota})`, 'Hari, Tanggal Pemilihan:', sanitizeSpreadsheetCell(electionDate)],
     // R7: Meta 3
-    ['Waktu Pelaksanaan:', electionTime, 'Tautan Bilik Suara:', voteUrl],
+    ['Waktu Pelaksanaan:', sanitizeSpreadsheetCell(electionTime), 'Tautan Bilik Suara:', sanitizeSpreadsheetCell(voteUrl)],
     // R8: Baris kosong
     [],
     // R9: Banner Panduan (Merged A9:D9)
@@ -93,8 +108,8 @@ export function exportClassTokensToExcel(params: ClassExcelExportParams) {
     aoaData.push([
       idx + 1,
       `Absen ${String(idx + 1).padStart(2, '0')}`,
-      plainToken,
-      voteUrl,
+      sanitizeSpreadsheetCell(plainToken),
+      sanitizeSpreadsheetCell(voteUrl),
     ]);
   });
 

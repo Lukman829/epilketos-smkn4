@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     const sanitizedClass = {
       ...body,
-      id: sanitizeString(String(body.id || `cls-${Date.now()}`), 50),
+      id: sanitizeString(String(body.id || `cls-${crypto.randomUUID()}`), 50),
       grade: String(body.grade || '10').trim(),
       major: sanitizeString(String(body.major || 'UMUM'), 20),
       name: sanitizeString(String(body.name), 50),
